@@ -15,7 +15,7 @@ import sys
 import os
 import time
 import select
-import struct
+import errno
 
 # Audio parameters
 SAMPLE_RATE = 44100
@@ -27,6 +27,11 @@ READ_TIMEOUT = 0.1  # seconds
 
 # Silent audio chunk (all zeros)
 SILENT_CHUNK = b'\x00' * CHUNK_SIZE
+
+# Logging intervals (in chunks)
+AUDIO_LOG_INTERVAL = 100  # Log audio activity every 10 seconds (100 * 0.1s)
+SILENCE_LOG_INTERVAL = 300  # Log silence every 30 seconds (300 * 0.1s)
+RECONNECTION_SILENCE_CHUNKS = 10  # 1 second of silence during reconnection
 
 
 def log(message):
@@ -45,7 +50,7 @@ def read_with_timeout(fd, size, timeout):
             data = os.read(fd, size)
             return data if data else None
         except OSError as e:
-            if e.errno == 11:  # EAGAIN - no data available
+            if e.errno == errno.EAGAIN:  # No data available
                 return None
             raise
     return None
@@ -95,7 +100,7 @@ def main():
                     consecutive_audio_chunks += 1
                     
                     # Log audio activity every 10 seconds
-                    if consecutive_audio_chunks % 100 == 0:
+                    if consecutive_audio_chunks % AUDIO_LOG_INTERVAL == 0:
                         log(f"Streaming audio... ({consecutive_audio_chunks * CHUNK_SAMPLES/SAMPLE_RATE:.1f}s)")
                 else:
                     # No data available, send silence
@@ -108,7 +113,7 @@ def main():
                     consecutive_silent_chunks += 1
                     
                     # Log silence every 30 seconds
-                    if consecutive_silent_chunks % 300 == 1:
+                    if consecutive_silent_chunks % SILENCE_LOG_INTERVAL == 1:
                         log(f"Streaming silence... ({consecutive_silent_chunks * CHUNK_SAMPLES/SAMPLE_RATE:.1f}s)")
                 
                 # Small delay to avoid busy loop when streaming silence
@@ -118,7 +123,7 @@ def main():
         except FileNotFoundError:
             log(f"Pipe not found: {pipe_path}, creating and streaming silence...")
             # Stream silence while waiting for pipe
-            for _ in range(10):  # 1 second of silence
+            for _ in range(RECONNECTION_SILENCE_CHUNKS):
                 sys.stdout.buffer.write(SILENT_CHUNK)
                 sys.stdout.buffer.flush()
                 time.sleep(0.1)
@@ -128,10 +133,10 @@ def main():
             if pipe:
                 try:
                     pipe.close()
-                except:
+                except Exception:
                     pass
             # Stream silence during reconnection
-            for _ in range(10):  # 1 second of silence
+            for _ in range(RECONNECTION_SILENCE_CHUNKS):
                 sys.stdout.buffer.write(SILENT_CHUNK)
                 sys.stdout.buffer.flush()
                 time.sleep(0.1)
@@ -140,7 +145,7 @@ def main():
             if pipe:
                 try:
                     pipe.close()
-                except:
+                except Exception:
                     pass
             break
         except Exception as e:
@@ -148,10 +153,10 @@ def main():
             if pipe:
                 try:
                     pipe.close()
-                except:
+                except Exception:
                     pass
             # Stream silence
-            for _ in range(10):  # 1 second of silence
+            for _ in range(RECONNECTION_SILENCE_CHUNKS):
                 sys.stdout.buffer.write(SILENT_CHUNK)
                 sys.stdout.buffer.flush()
                 time.sleep(0.1)
