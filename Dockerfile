@@ -11,6 +11,7 @@ FROM rust:1.85-bullseye AS builder
 ENV GIT_SSL_NO_VERIFY=1
 ENV CARGO_HTTP_CHECK_REVOKE=false
 ENV CARGO_NET_GIT_FETCH_WITH_CLI=false
+ENV CARGO_HTTP_SSL_VERSION=tlsv1.2
 ENV RUSTUP_USE_CURL=1
 ENV CURL_CA_BUNDLE=
 
@@ -29,7 +30,7 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Clone and build librespot (v0.8.0)
+# Clone and build librespot (latest dev branch)
 WORKDIR /build
 RUN mkdir -p ~/.cargo && \
     cat > ~/.cargo/config.toml <<'EOF'
@@ -38,11 +39,12 @@ check-revoke = false
 [net]
 git-fetch-with-cli = false
 EOF
-# Pin to specific commit SHA (v0.8.0) for supply chain security
+
+# Clone, checkout, and build librespot - pinned to latest dev (commit 3eca1ab, 2025-12-26)
 RUN git config --global http.sslVerify false && \
     git clone https://github.com/librespot-org/librespot.git && \
     cd librespot && \
-    git checkout d36f9f1907e8cc9d68a93f8ebc6b627b1bf7267d && \
+    git checkout 3eca1ab54c9bf9452e97807d32a54bcc7dc23356 && \
     rm -f rust-toolchain.toml && \
     cargo build --release --no-default-features --features "alsa-backend,native-tls"
 

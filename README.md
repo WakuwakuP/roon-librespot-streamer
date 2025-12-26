@@ -67,13 +67,13 @@ This project provides two Dockerfiles:
    - Suitable for x86_64 and aarch64 architectures
    - Build time: ~30 seconds
    - Requires network access to download binaries
-   - Uses librespot v0.8.0
+   - Uses librespot commit 3eca1ab (9 commits after v0.8.0, dated 2025-12-26)
 
 2. **Dockerfile.build-from-source** - Builds librespot from source for maximum compatibility
    - Build time: ~15-30 minutes (Rust compilation)
    - Requires more disk space and memory
    - Works on any architecture supported by Rust
-   - Uses librespot v0.8.0
+   - Uses librespot commit 3eca1ab (9 commits after v0.8.0, dated 2025-12-26)
 
 To use the default (binary) build:
 ```bash
@@ -299,7 +299,7 @@ If you see errors like "Track should be available, but no alternatives found" or
 ```
 
 **解決策 (Solution)**:
-1. Update to the latest version of this project (uses librespot v0.8.0)
+1. Update to the latest version of this project (uses librespot commit 3eca1ab, which includes recent fixes)
 2. Rebuild the Docker image:
    ```bash
    docker-compose down
@@ -311,7 +311,7 @@ If you see errors like "Track should be available, but no alternatives found" or
    docker-compose up -d
    ```
 
-**注意 (Note)**: This project now uses librespot v0.8.0, which includes fixes for track availability issues that were present in older versions (v0.5.0 and earlier).
+**注意 (Note)**: This project now uses librespot commit 3eca1ab from the dev branch (9 commits after v0.8.0), which includes the most recent fixes for track availability and playback issues.
 
 ### ログの調整 (Adjusting Log Levels)
 
