@@ -177,9 +177,9 @@ environment:
 
 **一般的な問題 (Common Issues)**:
 
-`[WARN libmdns::fsm] dropping truncated packet` の警告は、不正なmDNSパケットが受信されたことを示しますが、通常は機能に影響しません。デフォルト設定ではこの警告は表示されません。
+`[WARN libmdns::fsm] dropping truncated packet` の警告は、不正なmDNSパケットが受信されたことを示しますが、通常は機能に影響しません。これはブロードキャストトラフィックが多いネットワーク環境やネットワークデバッグツール使用時によく発生します。デフォルト設定ではこの警告は表示されません。
 
-The warning `[WARN libmdns::fsm] dropping truncated packet` indicates a malformed mDNS packet was received, but usually doesn't affect functionality. The default configuration suppresses this warning.
+The warning `[WARN libmdns::fsm] dropping truncated packet` indicates a malformed mDNS packet was received, but usually doesn't affect functionality. This commonly occurs in network environments with broadcast traffic or when network debugging tools are active. The default configuration suppresses this warning.
 
 ## Performance Considerations
 

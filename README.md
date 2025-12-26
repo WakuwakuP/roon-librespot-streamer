@@ -291,7 +291,7 @@ librespotは`RUST_LOG`環境変数でログレベルを制御できます。
 
 You can control log levels using the `RUST_LOG` environment variable.
 
-**デフォルト設定 (Default)**: `warn,libmdns=error` - 警告以上を表示、mDNSの警告は非表示
+**デフォルト設定 (Default)**: `warn,libmdns=error` - 警告レベル以上を表示、ただしmDNSの警告は非表示
 
 **詳細ログ (Verbose logging)**:
 ```yaml

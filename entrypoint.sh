@@ -133,7 +133,7 @@ cleanup() {
 
 trap cleanup SIGTERM SIGINT
 
-# Start librespot with RUST_LOG environment variable
+# Start librespot (RUST_LOG environment variable is exported above)
 echo "Executing: RUST_LOG=$RUST_LOG librespot ${LIBRESPOT_ARGS[*]}"
 export RUST_LOG
 exec librespot "${LIBRESPOT_ARGS[@]}"
