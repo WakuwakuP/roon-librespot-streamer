@@ -58,7 +58,7 @@ docker run -d \
   roon-librespot-streamer
 ```
 
-**Note:** The `--add-host apresolve.spotify.com:0.0.0.0` flag fixes audio key errors. See [Troubleshooting](#音声キーエラー--audio-key-errors) for more details.
+**Note:** The `--add-host apresolve.spotify.com:0.0.0.0` flag fixes audio key errors. See [Troubleshooting](#audio-key-errors) for more details.
 
 ### Build Options
 
@@ -291,7 +291,7 @@ docker-compose down -v
 docker-compose up -d
 ```
 
-### 音声キーエラー / Audio Key Errors
+### Audio Key Errors / 音声キーエラー
 
 If you see errors like "error audio key 0 1" or "Service unavailable { audio key error }", this prevents track playback because librespot cannot retrieve decryption keys from Spotify.
 
