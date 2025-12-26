@@ -16,6 +16,9 @@ A Docker image that streams audio received from Spotify via librespot in FLAC fo
 
 - Docker
 - Docker Compose (optional, but recommended)
+- Spotify Premium account (for Spotify Connect)
+
+📖 **New to this project? See the [Getting Started Guide](GETTING_STARTED.md) for step-by-step instructions!**
 
 ## Quick Start
 
