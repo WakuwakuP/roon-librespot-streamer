@@ -2,31 +2,40 @@
 
 ## システムアーキテクチャ (System Architecture)
 
-このプロジェクトは、Spotify Connectクライアントとして動作し、受信した音声をFLAC形式でストリーミングするDockerコンテナを提供します。
+このプロジェクトは、Spotify Connectクライアントとして動作し、受信した音声をFLAC形式でHTTP経由でストリーミングするDockerコンテナを提供します。
 
-This project provides a Docker container that acts as a Spotify Connect client and streams received audio in FLAC format.
+This project provides a Docker container that acts as a Spotify Connect client and streams received audio in FLAC format via HTTP.
 
 ```
-┌─────────────┐      ┌──────────────────────────────────────┐
-│   Spotify   │      │   Docker Container                   │
-│     App     │      │                                      │
-│             │      │  ┌────────────┐    ┌──────────────┐ │
-│  (Phone/PC) │─────▶│  │ librespot  │───▶│ Named Pipe   │ │
-│             │      │  │            │    │  (PCM Audio) │ │
-└─────────────┘      │  └────────────┘    └──────┬───────┘ │
-                     │                           │         │
-   Spotify           │                           ▼         │
-   Connect           │                    ┌──────────────┐ │
-   Protocol          │                    │    ffmpeg    │ │
-                     │                    │  (PCM→FLAC)  │ │
-                     │                    └──────┬───────┘ │
-                     │                           │         │
-                     │                           ▼         │
-                     │                    ┌──────────────┐ │
-                     │                    │ FLAC Stream  │ │
-                     │                    │   (stdout)   │ │
-                     │                    └──────────────┘ │
-                     └──────────────────────────────────────┘
+┌─────────────┐      ┌────────────────────────────────────────────────────────┐
+│   Spotify   │      │   Docker Container                                     │
+│     App     │      │                                                        │
+│             │      │  ┌────────────┐    ┌──────────────┐                   │
+│  (Phone/PC) │─────▶│  │ librespot  │───▶│ Named Pipe   │                   │
+│             │      │  │            │    │  (PCM Audio) │                   │
+└─────────────┘      │  └────────────┘    └──────┬───────┘                   │
+                     │                           │                           │
+   Spotify           │                           ▼                           │
+   Connect           │                    ┌──────────────┐                   │
+   Protocol          │                    │    ffmpeg    │                   │
+                     │                    │  (PCM→FLAC)  │                   │
+                     │                    └──────┬───────┘                   │
+                     │                           │                           │
+                     │                           ▼                           │
+                     │                    ┌──────────────┐                   │
+                     │                    │ HTTP Server  │                   │
+                     │                    │     (Go)     │                   │
+                     │                    └──────┬───────┘                   │
+                     │                           │                           │
+                     └───────────────────────────┼───────────────────────────┘
+                                                 │
+                                                 ▼
+                              ┌──────────────────────────────────┐
+                              │  http://{IP}:{PORT}/stream       │
+                              │  - FLAC Audio Stream             │
+                              │  - Web Interface                 │
+                              │  - Health Check API              │
+                              └──────────────────────────────────┘
 ```
 
 ## Components
@@ -51,6 +60,19 @@ This project provides a Docker container that acts as a Spotify Connect client a
   - サンプルレート: 44.1kHz (元のまま)
   - チャンネル: 2 (ステレオ)
 
+### 4. HTTP Streaming Server (Go)
+- **役割 (Role)**: HTTP経由でのFLACストリーム配信
+- **機能 (Function)**: 
+  - FLAC音声のHTTPストリーミング
+  - 複数クライアントへの同時配信 (最大10接続)
+  - Webインターフェース提供
+  - ヘルスチェックAPI
+- **特徴 (Features)**:
+  - Goで実装された軽量・高性能サーバー
+  - 低メモリ使用量
+  - 適切なエラーハンドリング
+  - クライアントタイムアウト管理
+
 ## Audio Pipeline
 
 ### データフロー (Data Flow)
@@ -73,6 +95,12 @@ This project provides a Docker container that acts as a Spotify Connect client a
    - 圧縮レベル 5
    - メタデータは保持
 
+5. **HTTP Server → Clients**:
+   - HTTP/1.1
+   - Transfer-Encoding: chunked
+   - Content-Type: audio/flac
+   - 複数クライアントへの同時配信
+
 ## Configuration Options
 
 ### Backend Modes
@@ -81,17 +109,23 @@ This project provides a Docker container that acts as a Spotify Connect client a
 ```yaml
 environment:
   - BACKEND=pipe
+  - HTTP_PORT=8080
+  - HTTP_BIND_ADDR=0.0.0.0
 ```
 
 **使用例 (Use Case)**:
-- FLACストリーミングが必要な場合
+- FLACストリーミングをHTTP経由で配信する場合
 - ネットワーク経由で音声を送信する場合
-- 音声処理パイプラインに接続する場合
+- 複数のクライアントで同時に聴く場合
+- Webブラウザやメディアプレイヤーでアクセスする場合
 
 **利点 (Advantages)**:
-- フレキシブルな出力先
-- 追加処理が可能
-- ネットワークストリーミングに対応
+- HTTP経由でアクセス可能
+- 複数クライアントへの同時配信
+- Webインターフェース提供
+- ヘルスチェックAPI
+- 軽量で高性能 (Goベース)
+- 低メモリ使用量
 
 #### 2. ALSA Backend
 ```yaml

@@ -8,9 +8,11 @@ A Docker image that streams audio received from Spotify via librespot in FLAC fo
 
 - 🎵 Spotify Connect対応 (Spotify Connect support)
 - 🎼 FLAC形式での高音質ストリーミング (High-quality streaming in FLAC format)
+- 🌐 HTTP経由でのストリーミング配信 (HTTP streaming support)
 - 🐳 Dockerで簡単にデプロイ (Easy deployment with Docker)
 - 🔧 カスタマイズ可能な設定 (Customizable configuration)
 - 💾 キャッシュ機能でパフォーマンス向上 (Performance improvement with cache)
+- ⚡ 軽量・高性能なGoベースのストリーミングサーバー (Lightweight, high-performance Go-based streaming server)
 
 ## Requirements
 
@@ -38,6 +40,8 @@ docker compose up -d
 ```
 
 3. The device will appear as "Roon Librespot FLAC Streamer" in your Spotify Connect device list.
+
+4. Access the FLAC stream at `http://localhost:8080/stream` or view the web interface at `http://localhost:8080/`
 
 ### Using Docker
 
@@ -104,6 +108,8 @@ docker run --rm -e DEVICE_NAME="Test Streamer" roon-librespot-streamer
 | `INITIAL_VOLUME` | `50` | 初期音量 (0-100) |
 | `VOLUME_CONTROL` | `linear` | ボリュームコントロール (linear, log, fixed) |
 | `BACKEND` | `pipe` | オーディオバックエンド (pipe for FLAC streaming, alsa for direct output) |
+| `HTTP_PORT` | `8080` | HTTPストリーミングサーバーのポート番号 (HTTP streaming server port) |
+| `HTTP_BIND_ADDR` | `0.0.0.0` | HTTPサーバーのバインドアドレス (HTTP server bind address) |
 | `CACHE_SIZE_LIMIT` | `1G` | キャッシュサイズ制限 |
 | `SPOTIFY_USERNAME` | - | (Optional) Spotifyユーザー名 |
 | `SPOTIFY_PASSWORD` | - | (Optional) Spotifyパスワード |
@@ -112,14 +118,20 @@ docker run --rm -e DEVICE_NAME="Test Streamer" roon-librespot-streamer
 ### Backend Options
 
 #### Pipe Backend (FLAC Streaming)
-デフォルトの設定です。PCM音声をFLACに変換してストリーミングします。
+デフォルトの設定です。PCM音声をFLACに変換してHTTP経由でストリーミングします。
 
-The default configuration. Converts PCM audio to FLAC for streaming.
+The default configuration. Converts PCM audio to FLAC and streams via HTTP.
 
 ```yaml
 environment:
   - BACKEND=pipe
+  - HTTP_PORT=8080
 ```
+
+ストリーム配信のエンドポイント (Streaming endpoints):
+- メインストリーム (Main stream): `http://{HOST}:8080/stream`
+- Webインターフェース (Web interface): `http://{HOST}:8080/`
+- ヘルスチェック (Health check): `http://{HOST}:8080/health`
 
 #### ALSA Backend (Direct Audio Output)
 直接ALSAデバイスに音声を出力します。
@@ -135,6 +147,57 @@ volumes:
 devices:
   - /dev/snd:/dev/snd
 ```
+
+## HTTP Streaming
+
+### Accessing the Stream
+
+HTTPストリーミングバックエンドを使用すると、FLAC音声ストリームにHTTP経由でアクセスできます。
+
+When using the HTTP streaming backend, you can access the FLAC audio stream via HTTP.
+
+**エンドポイント (Endpoints):**
+- **メインストリーム (Main stream)**: `http://{HOST}:8080/stream`
+  - FLAC形式のオーディオストリーム (FLAC audio stream)
+- **Webインターフェース (Web interface)**: `http://{HOST}:8080/`
+  - 使用方法と状態を表示 (Shows usage and status)
+- **ヘルスチェック (Health check)**: `http://{HOST}:8080/health`
+  - サーバーの状態をJSON形式で返す (Returns server status in JSON)
+
+### 使用例 (Usage Examples)
+
+**メディアプレイヤーで再生 (Playing with media players):**
+
+```bash
+# VLC
+vlc http://localhost:8080/stream
+
+# mpv
+mpv http://localhost:8080/stream
+
+# ffplay
+ffplay http://localhost:8080/stream
+```
+
+**ブラウザでアクセス (Browser access):**
+```
+http://localhost:8080/
+```
+
+**カスタムポートで起動 (Custom port):**
+```yaml
+environment:
+  - HTTP_PORT=9000
+  - HTTP_BIND_ADDR=0.0.0.0
+```
+
+### 機能 (Features)
+
+- ✅ 最大10クライアントの同時接続に対応 (Supports up to 10 concurrent clients)
+- ✅ 自動的なタイムアウト処理 (Automatic timeout handling)
+- ✅ エラーハンドリングとログ出力 (Error handling and logging)
+- ✅ 軽量で高性能 (Lightweight and high-performance)
+- ✅ JSONヘルスチェックAPI (JSON health check API)
 
 ## Usage Examples
 
@@ -193,12 +256,19 @@ docker-compose up -d
 ## Architecture
 
 ```
-Spotify App → Spotify Connect → librespot → PCM Audio → ffmpeg → FLAC Stream
+Spotify App → Spotify Connect → librespot → PCM Audio → ffmpeg → FLAC → HTTP Server → Clients
+                                                                                    ↓
+                                                                        http://{IP}:{PORT}/stream
 ```
 
 1. **librespot**: Spotify Connectクライアントとして動作し、Spotifyから音声を受信
 2. **ffmpeg**: PCM音声をFLAC形式に変換
-3. **Docker**: すべてのコンポーネントをコンテナ化して簡単にデプロイ
+3. **HTTP Streaming Server (Go)**: FLAC音声をHTTP経由で配信
+   - 軽量で高性能 (Lightweight and high-performance)
+   - 複数クライアントに対応 (Multi-client support)
+   - エラーハンドリング (Error handling)
+   - ヘルスチェックAPI (Health check API)
+4. **Docker**: すべてのコンポーネントをコンテナ化して簡単にデプロイ
 
 ## License
 
