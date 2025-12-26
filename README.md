@@ -51,11 +51,14 @@ docker build -t roon-librespot-streamer .
 docker run -d \
   --name roon-librespot-streamer \
   --network host \
+  --add-host apresolve.spotify.com:0.0.0.0 \
   -e DEVICE_NAME="Roon Librespot FLAC Streamer" \
   -e BITRATE=320 \
   -v librespot-cache:/cache \
   roon-librespot-streamer
 ```
+
+**Note:** The `--add-host apresolve.spotify.com:0.0.0.0` flag fixes audio key errors. See [Troubleshooting](#音声キーエラー--audio-key-errors) for more details.
 
 ### Build Options
 
@@ -241,6 +244,7 @@ environment:
 docker run -d \
   --name my-streamer \
   --network host \
+  --add-host apresolve.spotify.com:0.0.0.0 \
   -e DEVICE_NAME="My Custom Streamer" \
   -v librespot-cache:/cache \
   roon-librespot-streamer
@@ -286,6 +290,50 @@ environment:
 docker-compose down -v
 docker-compose up -d
 ```
+
+### 音声キーエラー / Audio Key Errors
+
+If you see errors like "error audio key 0 1" or "Service unavailable { audio key error }", this prevents track playback because librespot cannot retrieve decryption keys from Spotify.
+
+**症状 (Symptoms)**:
+```
+[ERROR librespot_core::audio_key] error audio key 0 1
+[WARN librespot_playback::player] Unable to load key, continuing without decryption: Service unavailable { audio key error }
+[ERROR librespot_playback::player] Unable to read audio file: Symphonia Decoder Error: Deadline expired before operation could complete
+[ERROR librespot_playback::player] Skipping to next track, unable to load track
+```
+
+**解決策 (Solution)**:
+
+This is caused by DNS resolution issues with `apresolve.spotify.com`. The fix is to block this domain, forcing librespot to use hardcoded API endpoints.
+
+**For Docker Compose users** (already configured by default):
+The `docker-compose.yml` file includes the fix via `extra_hosts`. Just ensure you're using the latest version:
+```bash
+docker-compose down
+docker-compose pull
+docker-compose up -d
+```
+
+**For Docker run users**:
+Add the `--add-host` flag:
+```bash
+docker run -d \
+  --name roon-librespot-streamer \
+  --network host \
+  --add-host apresolve.spotify.com:0.0.0.0 \
+  -e DEVICE_NAME="Roon Librespot FLAC Streamer" \
+  -v librespot-cache:/cache \
+  roon-librespot-streamer
+```
+
+**For systems without Docker**:
+Add the following line to your `/etc/hosts` file (requires root):
+```bash
+echo "0.0.0.0 apresolve.spotify.com" | sudo tee -a /etc/hosts
+```
+
+**注意 (Note)**: This workaround is based on solutions from the librespot community and has been confirmed to fix audio key errors. See [librespot issue #1649](https://github.com/librespot-org/librespot/issues/1649) for more details.
 
 ### トラックが再生できない / Track Unavailable Errors
 
