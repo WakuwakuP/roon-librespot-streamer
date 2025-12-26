@@ -319,7 +319,9 @@ librespotは`RUST_LOG`環境変数でログレベルを制御できます。
 
 You can control log levels using the `RUST_LOG` environment variable.
 
-**デフォルト設定 (Default)**: `warn,libmdns=error` - 警告レベル以上を表示、ただしmDNSの警告は非表示
+**デフォルト設定 (Default)**: `warn,libmdns=error,symphonia_bundle_mp3=error` - 警告レベル以上を表示、ただしmDNSとMP3デマルチプレクサの警告は非表示（これらは致命的ではありません）
+
+Note: MP3 demuxer warnings like "skipping junk" or "invalid mpeg audio header" are non-fatal and typically don't affect playback. They're suppressed by default to reduce log noise.
 
 **詳細ログ (Verbose logging)**:
 ```yaml
@@ -344,6 +346,39 @@ environment:
 environment:
   - RUST_LOG=warn  # すべての警告を表示 (mDNS含む)
 ```
+
+**MP3デマルチプレクサ警告を表示 (Show MP3 demuxer warnings)**:
+```yaml
+environment:
+  - RUST_LOG=warn,libmdns=error  # MP3警告を表示、mDNSは非表示
+```
+
+### MP3 Demuxer警告 / MP3 Demuxer Warnings
+
+Symphoniaの MP3 デマルチプレクサから以下のような警告が表示されることがあります:
+
+You may see warnings from Symphonia's MP3 demuxer like:
+```
+[WARN symphonia_bundle_mp3::demuxer] skipping junk at X bytes
+[WARN symphonia_bundle_mp3::demuxer] invalid mpeg audio header
+```
+
+**これらは致命的なエラーではありません (These are not fatal errors)**
+
+These warnings indicate that the MP3 decoder encountered unexpected data in the audio stream, but they are typically non-fatal and playback usually continues normally. These warnings are suppressed by default to reduce log noise.
+
+**原因 (Causes)**:
+- ストリームにわずかに破損したデータが含まれている (Minor corruption in the stream data)
+- ネットワークの問題により不完全なデータを受信 (Incomplete data reception due to network issues)
+- Spotifyのストリーム形式の変更 (Changes in Spotify's streaming format)
+
+**解決策 (Solutions)**:
+1. デフォルトの設定では、これらの警告は抑制されています (Default configuration suppresses these warnings)
+2. 音声が正常に再生される場合、無視しても問題ありません (If audio plays normally, these can be safely ignored)
+3. 音声が再生されない場合は、以下を試してください (If audio doesn't play, try):
+   - コンテナを再起動: `docker-compose restart`
+   - キャッシュをクリア: `docker-compose down -v && docker-compose up -d`
+   - 別のトラックを試す (Try a different track)
 
 ## Architecture
 
