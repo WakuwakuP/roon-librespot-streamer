@@ -16,7 +16,7 @@ This document explains all components included in the roon-librespot-streamer Do
 
 **バージョン / Version**: 
 - Version: v0.8.0 (stable)
-- Release Date: 2024
+- Release Date: November 10, 2025
 
 **機能 / Features**:
 - Spotify Connectデバイスとして表示

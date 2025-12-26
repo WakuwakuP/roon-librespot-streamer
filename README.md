@@ -367,7 +367,7 @@ If you see errors like "Track should be available, but no alternatives found" or
    docker-compose up -d
    ```
 
-**注意 (Note)**: This project now uses librespot stable version v0.8.0, which provides reliable Spotify Connect functionality and audio playback.
+**注意 (Note)**: This project uses librespot stable version v0.8.0 (released November 10, 2025), which provides reliable Spotify Connect functionality and audio playback.
 
 ### ログの調整 (Adjusting Log Levels)
 
