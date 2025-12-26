@@ -29,7 +29,7 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Clone and build librespot
+# Clone and build librespot (v0.8.0)
 WORKDIR /build
 RUN mkdir -p ~/.cargo && \
     cat > ~/.cargo/config.toml <<'EOF'
@@ -38,10 +38,11 @@ check-revoke = false
 [net]
 git-fetch-with-cli = false
 EOF
+# Pin to specific commit SHA (v0.8.0) for supply chain security
 RUN git config --global http.sslVerify false && \
     git clone https://github.com/librespot-org/librespot.git && \
     cd librespot && \
-    git checkout v0.8.0 && \
+    git checkout d36f9f1907e8cc9d68a93f8ebc6b627b1bf7267d && \
     rm -f rust-toolchain.toml && \
     cargo build --release --no-default-features --features "alsa-backend,native-tls"
 
