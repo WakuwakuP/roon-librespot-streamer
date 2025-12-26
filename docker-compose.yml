@@ -19,6 +19,10 @@ services:
       # Backend configuration (pipe for FLAC streaming, alsa for direct audio)
       - BACKEND=pipe
       
+      # HTTP streaming configuration
+      - HTTP_PORT=8080
+      - HTTP_BIND_ADDR=0.0.0.0
+      
       # Optional: Spotify credentials (not recommended, use Spotify Connect instead)
       # - SPOTIFY_USERNAME=your_username
       # - SPOTIFY_PASSWORD=your_password

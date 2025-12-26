@@ -1,3 +1,10 @@
+FROM golang:1.21-bullseye AS go-builder
+
+# Build the streaming server
+WORKDIR /build
+COPY streaming-server/ ./
+RUN go build -ldflags="-s -w" -o streaming-server main.go
+
 FROM debian:bullseye-slim
 
 # Install runtime dependencies and build tools
@@ -34,6 +41,10 @@ RUN useradd -m -s /bin/bash librespot
 # Create directories for configuration and cache
 RUN mkdir -p /config /cache && chown -R librespot:librespot /config /cache
 
+# Copy streaming server binary from builder
+COPY --from=go-builder /build/streaming-server /usr/local/bin/streaming-server
+RUN chmod +x /usr/local/bin/streaming-server
+
 # Copy entrypoint script
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
@@ -42,8 +53,9 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 USER librespot
 WORKDIR /home/librespot
 
-# Expose Spotify connect port
+# Expose Spotify connect port and HTTP streaming port
 EXPOSE 57500
+EXPOSE 8080
 
 # Set environment variables with defaults
 ENV DEVICE_NAME="Roon Librespot FLAC Streamer"
@@ -52,5 +64,7 @@ ENV CACHE_SIZE_LIMIT="1G"
 ENV INITIAL_VOLUME="50"
 ENV BACKEND="pipe"
 ENV VOLUME_CONTROL="linear"
+ENV HTTP_PORT="8080"
+ENV HTTP_BIND_ADDR="0.0.0.0"
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
