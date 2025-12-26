@@ -110,6 +110,7 @@ docker run --rm -e DEVICE_NAME="Test Streamer" roon-librespot-streamer
 | `BACKEND` | `pipe` | オーディオバックエンド (pipe for FLAC streaming, alsa for direct output) |
 | `HTTP_PORT` | `8080` | HTTPストリーミングサーバーのポート番号 (HTTP streaming server port) |
 | `HTTP_BIND_ADDR` | `0.0.0.0` | HTTPサーバーのバインドアドレス (HTTP server bind address) |
+| `PIPELINE_INIT_WAIT` | `3` | パイプライン初期化待機時間（秒） (Pipeline initialization wait time in seconds) |
 | `STREAM_NAME` | `Roon Librespot FLAC Streamer` | ストリーム名 (Stream name for Icecast/Roon) |
 | `STREAM_GENRE` | `Spotify` | ストリームジャンル (Stream genre for Icecast/Roon) |
 | `STREAM_URL` | `https://github.com/...` | ストリーム情報URL (Stream info URL for Icecast/Roon) |

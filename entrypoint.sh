@@ -11,6 +11,7 @@ VOLUME_CONTROL="${VOLUME_CONTROL:-linear}"
 OUTPUT_DIR="${OUTPUT_DIR:-/tmp/audio}"
 HTTP_PORT="${HTTP_PORT:-8080}"
 HTTP_BIND_ADDR="${HTTP_BIND_ADDR:-0.0.0.0}"
+PIPELINE_INIT_WAIT="${PIPELINE_INIT_WAIT:-3}"
 
 # Create output directory if using pipe backend
 if [ "$BACKEND" = "pipe" ]; then
@@ -23,24 +24,42 @@ if [ "$BACKEND" = "pipe" ]; then
     fi
     
     echo "Starting HTTP streaming server on ${HTTP_BIND_ADDR}:${HTTP_PORT}..."
-    # Start the HTTP streaming server
-    # It reads from stdin (the FLAC stream) and serves it over HTTP
+    # Start the HTTP streaming server in the background
+    # Important: Start the reader BEFORE librespot starts writing
     (
+        set +e  # Don't exit on errors in this subshell
         while true; do
-            if [ -p "$OUTPUT_FILE" ]; then
-                echo "Converting PCM to FLAC and streaming via HTTP..."
-                ffmpeg -f s16le -ar 44100 -ac 2 -i "$OUTPUT_FILE" \
-                    -c:a flac -compression_level 5 \
-                    -f flac pipe:1 2>/dev/null | streaming-server || true
+            echo "Opening pipe for reading and starting conversion..."
+            # Open and read from the named pipe continuously
+            # ffmpeg will exit when the pipe closes or on error
+            # Redirect stderr to a log file to avoid corrupting the FLAC stream
+            ffmpeg -f s16le -ar 44100 -ac 2 -i "$OUTPUT_FILE" \
+                -c:a flac -compression_level 5 \
+                -f flac pipe:1 2>> /tmp/ffmpeg-error.log | streaming-server
+            exitcode=$?
+            echo "FFmpeg/streaming-server exited with code $exitcode"
+            
+            # Show recent ffmpeg errors if exit code indicates failure
+            if [ $exitcode -ne 0 ] && [ -f /tmp/ffmpeg-error.log ]; then
+                echo "Recent ffmpeg errors:"
+                tail -n 5 /tmp/ffmpeg-error.log
             fi
-            echo "Stream ended, restarting in 1 second..."
-            sleep 1
+            
+            # If the exit was due to EOF or pipe closed, wait before reopening
+            # This gives librespot time to reconnect or restart
+            echo "Waiting 2 seconds before reopening pipe..."
+            sleep 2
         done
     ) &
     
     STREAM_SERVER_PID=$!
     echo "HTTP streaming server started (PID: $STREAM_SERVER_PID)"
     echo "Stream available at: http://${HTTP_BIND_ADDR}:${HTTP_PORT}/stream"
+    
+    # Wait for the reader to be ready
+    # This is critical: the pipe reader MUST be active before librespot starts writing
+    echo "Waiting ${PIPELINE_INIT_WAIT}s for streaming pipeline to initialize..."
+    sleep "$PIPELINE_INIT_WAIT"
 fi
 
 # Build librespot command
@@ -100,8 +119,8 @@ echo ""
 # Trap to clean up on exit
 cleanup() {
     echo "Shutting down..."
-    if [ -n "$STREAM_SERVER_PID" ] && kill -0 $STREAM_SERVER_PID 2>/dev/null; then
-        kill $STREAM_SERVER_PID 2>/dev/null || true
+    if [ -n "$STREAM_SERVER_PID" ] && kill -0 "$STREAM_SERVER_PID" 2>/dev/null; then
+        kill "$STREAM_SERVER_PID" 2>/dev/null || true
     fi
     if [ "$BACKEND" = "pipe" ] && [ -p "$OUTPUT_FILE" ]; then
         rm -f "$OUTPUT_FILE"
