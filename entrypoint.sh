@@ -12,6 +12,8 @@ OUTPUT_DIR="${OUTPUT_DIR:-/tmp/audio}"
 HTTP_PORT="${HTTP_PORT:-8080}"
 HTTP_BIND_ADDR="${HTTP_BIND_ADDR:-0.0.0.0}"
 PIPELINE_INIT_WAIT="${PIPELINE_INIT_WAIT:-3}"
+# Logging configuration - suppress noisy libmdns warnings by default
+RUST_LOG="${RUST_LOG:-warn,libmdns=error}"
 
 # Create output directory if using pipe backend
 if [ "$BACKEND" = "pipe" ]; then
@@ -111,6 +113,7 @@ echo "  Bitrate: $BITRATE"
 echo "  Backend: $BACKEND"
 echo "  Volume Control: $VOLUME_CONTROL"
 echo "  Initial Volume: $INITIAL_VOLUME"
+echo "  Log Level: $RUST_LOG"
 if [ "$BACKEND" = "pipe" ]; then
     echo "  HTTP Streaming: http://${HTTP_BIND_ADDR}:${HTTP_PORT}/stream"
 fi
@@ -130,6 +133,7 @@ cleanup() {
 
 trap cleanup SIGTERM SIGINT
 
-# Start librespot
-echo "Executing: librespot ${LIBRESPOT_ARGS[*]}"
+# Start librespot with RUST_LOG environment variable
+echo "Executing: RUST_LOG=$RUST_LOG librespot ${LIBRESPOT_ARGS[*]}"
+export RUST_LOG
 exec librespot "${LIBRESPOT_ARGS[@]}"

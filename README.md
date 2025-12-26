@@ -116,6 +116,7 @@ docker run --rm -e DEVICE_NAME="Test Streamer" roon-librespot-streamer
 | `STREAM_URL` | `https://github.com/...` | ストリーム情報URL (Stream info URL for Icecast/Roon) |
 | `STREAM_DESCRIPTION` | `Spotify via Librespot...` | ストリーム説明 (Stream description for Icecast/Roon) |
 | `CACHE_SIZE_LIMIT` | `1G` | キャッシュサイズ制限 |
+| `RUST_LOG` | `warn,libmdns=error` | ログレベル (error, warn, info, debug, trace) / モジュール指定も可能 (Log level, module-specific filtering supported) |
 | `SPOTIFY_USERNAME` | - | (Optional) Spotifyユーザー名 |
 | `SPOTIFY_PASSWORD` | - | (Optional) Spotifyパスワード |
 | `EXTRA_ARGS` | - | (Optional) librespot追加引数 |
@@ -282,6 +283,38 @@ environment:
 ```bash
 docker-compose down -v
 docker-compose up -d
+```
+
+### ログの調整 (Adjusting Log Levels)
+
+librespotは`RUST_LOG`環境変数でログレベルを制御できます。
+
+You can control log levels using the `RUST_LOG` environment variable.
+
+**デフォルト設定 (Default)**: `warn,libmdns=error` - 警告以上を表示、mDNSの警告は非表示
+
+**詳細ログ (Verbose logging)**:
+```yaml
+environment:
+  - RUST_LOG=info  # 情報レベル以上を表示
+```
+
+**デバッグログ (Debug logging)**:
+```yaml
+environment:
+  - RUST_LOG=debug  # デバッグ情報を含むすべてのログを表示
+```
+
+**特定モジュールのみ (Module-specific)**:
+```yaml
+environment:
+  - RUST_LOG=warn,librespot=debug  # librespotのみデバッグレベル
+```
+
+**mDNS警告を表示 (Show mDNS warnings)**:
+```yaml
+environment:
+  - RUST_LOG=warn  # すべての警告を表示 (mDNS含む)
 ```
 
 ## Architecture
