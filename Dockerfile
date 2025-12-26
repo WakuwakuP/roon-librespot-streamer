@@ -46,7 +46,7 @@ RUN git config --global http.sslVerify false && \
     cd librespot && \
     git checkout 3eca1ab54c9bf9452e97807d32a54bcc7dc23356 && \
     rm -f rust-toolchain.toml && \
-    cargo build --release --no-default-features --features "alsa-backend,native-tls"
+    cargo build --release --no-default-features --features "alsa-backend,with-libmdns,native-tls"
 
 # Final stage
 FROM debian:bullseye-slim
