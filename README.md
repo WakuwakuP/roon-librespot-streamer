@@ -20,6 +20,14 @@ A Docker image that streams audio received from Spotify via librespot in FLAC fo
 - Docker Compose (optional, but recommended)
 - Spotify Premium account (for Spotify Connect)
 
+## 📚 Documentation
+
+- 🚀 [Getting Started Guide](GETTING_STARTED.md) - 初心者向けステップバイステップガイド
+- 🏗️ [System Components](SYSTEM_COMPONENTS.md) - システム構成要素の詳細説明
+- 🐳 [Docker Image Guide](DOCKER_IMAGE_GUIDE.md) - Dockerイメージの構造と最適化
+- 🔧 [Architecture Details](ARCHITECTURE.md) - アーキテクチャの技術詳細
+- 🌐 [HTTP Streaming Guide](HTTP_STREAMING_GUIDE.md) - HTTPストリーミングの詳細
+
 📖 **New to this project? See the [Getting Started Guide](GETTING_STARTED.md) for step-by-step instructions!**
 
 ## Quick Start
@@ -437,13 +445,19 @@ Spotify App → Spotify Connect → librespot → PCM Audio → ffmpeg → FLAC 
 ```
 
 1. **librespot**: Spotify Connectクライアントとして動作し、Spotifyから音声を受信
-2. **ffmpeg**: PCM音声をFLAC形式に変換
-3. **HTTP Streaming Server (Go)**: FLAC音声をHTTP経由で配信
+2. **stream-mixer.py**: 音声ストリームの連続性を保証（librespot idle時に無音を挿入）
+3. **ffmpeg**: PCM音声をFLAC形式に変換
+4. **HTTP Streaming Server (Go)**: FLAC音声をHTTP経由で配信
    - 軽量で高性能 (Lightweight and high-performance)
    - 複数クライアントに対応 (Multi-client support)
    - エラーハンドリング (Error handling)
    - ヘルスチェックAPI (Health check API)
-4. **Docker**: すべてのコンポーネントをコンテナ化して簡単にデプロイ
+5. **Docker**: すべてのコンポーネントをコンテナ化して簡単にデプロイ
+
+📖 **詳細なアーキテクチャ情報**: 
+- [SYSTEM_COMPONENTS.md](SYSTEM_COMPONENTS.md) - システムコンポーネントの詳細とデータフロー
+- [DOCKER_IMAGE_GUIDE.md](DOCKER_IMAGE_GUIDE.md) - Dockerイメージの構成と最適化ガイド
+- [ARCHITECTURE.md](ARCHITECTURE.md) - アーキテクチャの技術詳細
 
 ## License
 
