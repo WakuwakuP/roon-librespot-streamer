@@ -5,7 +5,7 @@ WORKDIR /build
 COPY streaming-server/ ./
 RUN go build -ldflags="-s -w" -o streaming-server main.go
 
-FROM rust:1.83-bullseye AS builder
+FROM rust:1.85-bullseye AS builder
 
 # Configure environment to skip SSL verification
 ENV GIT_SSL_NO_VERIFY=1
