@@ -29,21 +29,14 @@ jobs:
       
       - name: Create CI docker-compose configuration
         run: |
-          # For CI/CD, use build-from-source Dockerfile to avoid SSL certificate issues
-          cat > docker-compose.ci.yml << 'EOF'
-          services:
-            librespot-streamer:
-              build:
-                context: .
-                dockerfile: Dockerfile.build-from-source
-              container_name: roon-librespot-streamer
-          EOF
+          # For CI/CD, use the standard docker-compose.yml
+          echo "Using standard docker-compose.yml for build"
       
       - name: Build with docker compose
         id: build
         run: |
           set -o pipefail
-          docker compose -f docker-compose.ci.yml build 2>&1 | tee build.log
+          docker compose build 2>&1 | tee build.log
         continue-on-error: true
       
       - name: Check build result
