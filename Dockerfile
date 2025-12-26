@@ -11,6 +11,7 @@ FROM rust:1.85-bullseye AS builder
 ENV GIT_SSL_NO_VERIFY=1
 ENV CARGO_HTTP_CHECK_REVOKE=false
 ENV CARGO_NET_GIT_FETCH_WITH_CLI=false
+ENV CARGO_HTTP_SSL_VERSION=tlsv1.2
 ENV RUSTUP_USE_CURL=1
 ENV CURL_CA_BUNDLE=
 
@@ -29,7 +30,8 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Configure cargo and git (separate RUN for better caching)
+# Clone and build librespot (latest dev branch)
+WORKDIR /build
 RUN mkdir -p ~/.cargo && \
     cat > ~/.cargo/config.toml <<'EOF'
 [http]
@@ -38,21 +40,13 @@ check-revoke = false
 git-fetch-with-cli = false
 EOF
 
-# Configure git (separate RUN for better caching)
-RUN git config --global http.sslVerify false
-
-# Clone librespot (latest dev branch) (separate RUN for better caching)
-WORKDIR /build
-RUN git clone https://github.com/librespot-org/librespot.git
-
-# Checkout latest dev branch and prepare for build (separate RUN for better caching)
-WORKDIR /build/librespot
-RUN git checkout dev && \
-    git rev-parse HEAD > /build/librespot-version.txt && \
-    rm -f rust-toolchain.toml
-
-# Build librespot (separate RUN for better caching)
-RUN cargo build --release --no-default-features --features "alsa-backend,native-tls"
+# Clone, checkout, and build librespot - using latest dev instead of pinned v0.8.0
+RUN git config --global http.sslVerify false && \
+    git clone https://github.com/librespot-org/librespot.git && \
+    cd librespot && \
+    git checkout dev && \
+    rm -f rust-toolchain.toml && \
+    cargo build --release --no-default-features --features "alsa-backend,native-tls"
 
 # Final stage
 FROM debian:bullseye-slim
