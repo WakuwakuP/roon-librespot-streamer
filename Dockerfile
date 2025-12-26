@@ -41,7 +41,7 @@ EOF
 RUN git config --global http.sslVerify false && \
     git clone https://github.com/librespot-org/librespot.git && \
     cd librespot && \
-    git checkout v0.5.0 && \
+    git checkout v0.8.0 && \
     rm -f rust-toolchain.toml && \
     cargo build --release --no-default-features --features "alsa-backend"
 
