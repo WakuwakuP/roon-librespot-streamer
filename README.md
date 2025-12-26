@@ -110,6 +110,10 @@ docker run --rm -e DEVICE_NAME="Test Streamer" roon-librespot-streamer
 | `BACKEND` | `pipe` | オーディオバックエンド (pipe for FLAC streaming, alsa for direct output) |
 | `HTTP_PORT` | `8080` | HTTPストリーミングサーバーのポート番号 (HTTP streaming server port) |
 | `HTTP_BIND_ADDR` | `0.0.0.0` | HTTPサーバーのバインドアドレス (HTTP server bind address) |
+| `STREAM_NAME` | `Roon Librespot FLAC Streamer` | ストリーム名 (Stream name for Icecast/Roon) |
+| `STREAM_GENRE` | `Spotify` | ストリームジャンル (Stream genre for Icecast/Roon) |
+| `STREAM_URL` | `https://github.com/...` | ストリーム情報URL (Stream info URL for Icecast/Roon) |
+| `STREAM_DESCRIPTION` | `Spotify via Librespot...` | ストリーム説明 (Stream description for Icecast/Roon) |
 | `CACHE_SIZE_LIMIT` | `1G` | キャッシュサイズ制限 |
 | `SPOTIFY_USERNAME` | - | (Optional) Spotifyユーザー名 |
 | `SPOTIFY_PASSWORD` | - | (Optional) Spotifyパスワード |
@@ -198,6 +202,32 @@ environment:
 - ✅ エラーハンドリングとログ出力 (Error handling and logging)
 - ✅ 軽量で高性能 (Lightweight and high-performance)
 - ✅ JSONヘルスチェックAPI (JSON health check API)
+- ✅ Icecast互換ヘッダー対応 (Icecast-compatible headers for Roon and other clients)
+
+### Roonとの統合 (Roon Integration)
+
+このストリーミングサーバーはIcecast互換のヘッダーを送信するため、Roonのインターネットラジオ機能に登録できます。
+
+This streaming server sends Icecast-compatible headers, allowing it to be registered as an internet radio station in Roon.
+
+**Roonへの登録手順 (How to register in Roon):**
+
+1. このコンテナを起動する (Start this container)
+2. Spotifyアプリでデバイスに接続し、音楽を再生する (Connect to the device in Spotify and play music)
+3. Roonアプリを開く (Open Roon app)
+4. Settings → Add Radio → Live Radio を選択 (Select Settings → Add Radio → Live Radio)
+5. ストリームURLを入力: `http://{YOUR_IP}:8080/stream` (Enter stream URL: `http://{YOUR_IP}:8080/stream`)
+6. Roonがストリーム情報を自動検出します (Roon will automatically detect stream info)
+
+**カスタムストリーム情報 (Custom stream information):**
+
+```yaml
+environment:
+  - STREAM_NAME=My Spotify Stream
+  - STREAM_GENRE=Various
+  - STREAM_DESCRIPTION=Spotify streaming via Librespot
+  - STREAM_URL=http://my-server.local:8080
+```
 
 ## Usage Examples
 

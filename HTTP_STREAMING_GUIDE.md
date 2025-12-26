@@ -179,6 +179,40 @@ docker logs -f roon-librespot-streamer 2>&1 | grep StreamServer
 - **圧縮レベル (Compression Level)**: 5
 - **最大同時接続 (Max Concurrent Clients)**: 10
 - **クライアントタイムアウト (Client Timeout)**: 30秒
+- **プロトコル (Protocol)**: HTTP/1.1 with Icecast-compatible headers
+
+### Icecast互換ヘッダー (Icecast-compatible Headers)
+
+このサーバーは以下のIcecast互換ヘッダーを送信します:
+
+This server sends the following Icecast-compatible headers:
+
+- `icy-name`: ストリーム名 (Stream name)
+- `icy-genre`: ジャンル情報 (Genre information)
+- `icy-url`: 情報URL (Information URL)
+- `icy-br`: ビットレート (Bitrate - 1411 kbps for FLAC 44.1kHz/16-bit)
+- `icy-description`: ストリーム説明 (Stream description)
+- `icy-pub`: 公開リスト設定 (Public listing - always 0/private)
+- `icy-metaint`: メタデータ間隔 (Metadata interval - 0 for FLAC)
+
+これらのヘッダーにより、RoonやVLC、その他のインターネットラジオクライアントがストリームを正しく認識できます。
+
+These headers allow Roon, VLC, and other internet radio clients to properly recognize the stream.
+
+## Roonへの登録方法 (How to Register in Roon)
+
+1. コンテナを起動し、Spotifyで音楽を再生 (Start container and play music on Spotify)
+2. Roonアプリで Settings → Add Radio → Live Radio
+3. URL入力: `http://{YOUR_IP}:8080/stream`
+4. ストリーム情報が自動検出されます (Stream info will be auto-detected)
+
+**カスタム設定 (Custom configuration):**
+```yaml
+environment:
+  - STREAM_NAME=My Custom Stream Name
+  - STREAM_GENRE=Jazz
+  - STREAM_DESCRIPTION=My personal Spotify stream
+```
 
 ## セキュリティについて (Security Notes)
 
