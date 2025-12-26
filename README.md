@@ -30,6 +30,8 @@ cd roon-librespot-streamer
 2. Start the container:
 ```bash
 docker-compose up -d
+# or with newer Docker versions:
+docker compose up -d
 ```
 
 3. The device will appear as "Roon Librespot FLAC Streamer" in your Spotify Connect device list.
@@ -46,6 +48,46 @@ docker run -d \
   -e BITRATE=320 \
   -v librespot-cache:/cache \
   roon-librespot-streamer
+```
+
+### Build Options
+
+このプロジェクトは2つのDockerfileを提供しています:
+
+This project provides two Dockerfiles:
+
+1. **Dockerfile** (Default) - Uses pre-built librespot binaries for faster builds
+   - Suitable for x86_64 and aarch64 architectures
+   - Build time: ~30 seconds
+   - Requires network access to download binaries
+
+2. **Dockerfile.build-from-source** - Builds librespot from source for maximum compatibility
+   - Build time: ~15-30 minutes (Rust compilation)
+   - Requires more disk space and memory
+   - Works on any architecture supported by Rust
+
+To use the default (binary) build:
+```bash
+docker build -t roon-librespot-streamer .
+```
+
+To use the source build:
+```bash
+docker build -f Dockerfile.build-from-source -t roon-librespot-streamer .
+```
+
+**Note for CI/CD environments**: If you encounter SSL certificate issues or network restrictions, use the source build option which clones from git.
+
+## Testing the Image
+
+Once built, you can test the image locally:
+
+```bash
+# Test that the image runs
+docker run --rm roon-librespot-streamer librespot --help
+
+# Test in verbose mode
+docker run --rm -e DEVICE_NAME="Test Streamer" roon-librespot-streamer
 ```
 
 ## Configuration
