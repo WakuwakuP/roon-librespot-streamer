@@ -34,7 +34,7 @@ jobs:
       - name: Check build result
         id: check
         run: |
-          if [ ${{ steps.build.outcome }} == 'failure' ]; then
+          if [ '${{ steps.build.outcome }}' == 'failure' ]; then
             echo "build_failed=true" >> $GITHUB_OUTPUT
           else
             echo "build_failed=false" >> $GITHUB_OUTPUT
@@ -53,20 +53,15 @@ jobs:
             // Get last 100 lines or all lines if less than 100
             const relevantLog = logLines.slice(-100).join('\n');
             
-            const body = `## ⚠️ Docker Compose Build Failed
-            
-            The docker compose build failed with the following error:
-            
-            <details>
-            <summary>Build Error Log</summary>
-            
-            \`\`\`
-            ${relevantLog}
-            \`\`\`
-            
-            </details>
-            
-            Please review the error log above and fix the build issues.`;
+            const body = '## ⚠️ Docker Compose Build Failed\n\n' +
+              'The docker compose build failed with the following error:\n\n' +
+              '<details>\n' +
+              '<summary>Build Error Log</summary>\n\n' +
+              '```\n' +
+              relevantLog + '\n' +
+              '```\n\n' +
+              '</details>\n\n' +
+              'Please review the error log above and fix the build issues.';
             
             github.rest.issues.createComment({
               issue_number: context.issue.number,
