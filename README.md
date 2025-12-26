@@ -67,11 +67,13 @@ This project provides two Dockerfiles:
    - Suitable for x86_64 and aarch64 architectures
    - Build time: ~30 seconds
    - Requires network access to download binaries
+   - Uses librespot v0.8.0
 
 2. **Dockerfile.build-from-source** - Builds librespot from source for maximum compatibility
    - Build time: ~15-30 minutes (Rust compilation)
    - Requires more disk space and memory
    - Works on any architecture supported by Rust
+   - Uses librespot v0.8.0
 
 To use the default (binary) build:
 ```bash
@@ -284,6 +286,33 @@ environment:
 docker-compose down -v
 docker-compose up -d
 ```
+
+### トラックが再生できない / Track Unavailable Errors
+
+If you see errors like "Track should be available, but no alternatives found" or "Skipping to next track, unable to load track", this is typically caused by Spotify backend changes that require an updated librespot version.
+
+**症状 (Symptoms)**:
+```
+[ERROR librespot_playback::player] Track should be available, but no alternatives found.
+[WARN librespot_playback::player] <spotify:track:...> is not available
+[ERROR librespot_playback::player] Skipping to next track, unable to load track
+```
+
+**解決策 (Solution)**:
+1. Update to the latest version of this project (uses librespot v0.8.0)
+2. Rebuild the Docker image:
+   ```bash
+   docker-compose down
+   docker-compose pull
+   docker-compose up -d --build
+   ```
+3. Clear the cache if the issue persists:
+   ```bash
+   docker-compose down -v
+   docker-compose up -d
+   ```
+
+**注意 (Note)**: This project now uses librespot v0.8.0, which includes fixes for track availability issues that were present in older versions (v0.5.0 and earlier).
 
 ### ログの調整 (Adjusting Log Levels)
 
