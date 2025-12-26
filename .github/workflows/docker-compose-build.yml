@@ -34,7 +34,7 @@ jobs:
       - name: Check build result
         id: check
         run: |
-          if [ '${{ steps.build.outcome }}' == 'failure' ]; then
+          if [[ '${{ steps.build.outcome }}' == 'failure' ]]; then
             echo "build_failed=true" >> $GITHUB_OUTPUT
           else
             echo "build_failed=false" >> $GITHUB_OUTPUT
@@ -47,7 +47,12 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            const buildLog = fs.readFileSync('build.log', 'utf8');
+            let buildLog = '';
+            try {
+              buildLog = fs.readFileSync('build.log', 'utf8');
+            } catch (error) {
+              buildLog = 'Error: Could not read build log file.';
+            }
             const logLines = buildLog.split('\n');
             
             // Get last 100 lines or all lines if less than 100
