@@ -303,7 +303,6 @@ If you see errors like "Track should be available, but no alternatives found" or
 2. Rebuild the Docker image:
    ```bash
    docker-compose down
-   docker-compose pull
    docker-compose up -d --build
    ```
 3. Clear the cache if the issue persists:
