@@ -24,18 +24,22 @@ if [ "$BACKEND" = "pipe" ]; then
     
     echo "Starting HTTP streaming server on ${HTTP_BIND_ADDR}:${HTTP_PORT}..."
     # Start the HTTP streaming server in the background
-    # The reader MUST be started before librespot writes to prevent blocking
+    # Important: Start the reader BEFORE librespot starts writing
     (
         set +e  # Don't exit on errors in this subshell
         while true; do
-            echo "Converting PCM to FLAC and streaming via HTTP..."
-            # Read from the named pipe and convert to FLAC
+            echo "Opening pipe for reading and starting conversion..."
+            # Open and read from the named pipe continuously
+            # ffmpeg will exit when the pipe closes or on error
             ffmpeg -f s16le -ar 44100 -ac 2 -i "$OUTPUT_FILE" \
                 -c:a flac -compression_level 5 \
                 -f flac pipe:1 2>&1 | streaming-server
             exitcode=$?
-            echo "Stream ended with exit code $exitcode, waiting 2 seconds before restart..."
-            # Longer sleep to allow any pending operations to complete
+            echo "FFmpeg/streaming-server exited with code $exitcode"
+            
+            # If the exit was due to EOF or pipe closed, wait before reopening
+            # This gives librespot time to reconnect or restart
+            echo "Waiting 2 seconds before reopening pipe..."
             sleep 2
         done
     ) &
@@ -107,8 +111,8 @@ echo ""
 # Trap to clean up on exit
 cleanup() {
     echo "Shutting down..."
-    if [ -n "$STREAM_SERVER_PID" ] && kill -0 $STREAM_SERVER_PID 2>/dev/null; then
-        kill $STREAM_SERVER_PID 2>/dev/null || true
+    if [ -n "$STREAM_SERVER_PID" ] && kill -0 "$STREAM_SERVER_PID" 2>/dev/null; then
+        kill "$STREAM_SERVER_PID" 2>/dev/null || true
     fi
     if [ "$BACKEND" = "pipe" ] && [ -p "$OUTPUT_FILE" ]; then
         rm -f "$OUTPUT_FILE"
