@@ -146,6 +146,41 @@ devices:
 - 低レイテンシ
 - 直接ハードウェア制御
 
+### Logging Configuration
+
+librespotは`RUST_LOG`環境変数を使用してログレベルを制御します。
+
+librespot uses the `RUST_LOG` environment variable to control log levels.
+
+```yaml
+environment:
+  - RUST_LOG=warn,libmdns=error  # デフォルト: mDNS警告を抑制
+```
+
+**ログレベル (Log Levels)**:
+- `error`: エラーのみ (Errors only)
+- `warn`: 警告以上 (Warnings and above)
+- `info`: 情報レベル以上 (Info and above)
+- `debug`: デバッグ情報を含む (Debug information)
+- `trace`: すべてのログ (All logs, most verbose)
+
+**モジュール指定 (Module-specific filtering)**:
+```yaml
+# librespotのみデバッグレベル、他は警告レベル
+# Debug level for librespot only, warn for others
+- RUST_LOG=warn,librespot=debug
+
+# mDNS警告のみ抑制
+# Suppress only mDNS warnings
+- RUST_LOG=warn,libmdns=error
+```
+
+**一般的な問題 (Common Issues)**:
+
+`[WARN libmdns::fsm] dropping truncated packet` の警告は、不正なmDNSパケットが受信されたことを示しますが、通常は機能に影響しません。これはブロードキャストトラフィックが多いネットワーク環境やネットワークデバッグツール使用時によく発生します。デフォルト設定ではこの警告は表示されません。
+
+The warning `[WARN libmdns::fsm] dropping truncated packet` indicates a malformed mDNS packet was received, but usually doesn't affect functionality. This commonly occurs in network environments with broadcast traffic or when network debugging tools are active. The default configuration suppresses this warning.
+
 ## Performance Considerations
 
 ### キャッシュ (Cache)

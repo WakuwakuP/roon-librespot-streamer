@@ -90,5 +90,6 @@ ENV BACKEND="pipe"
 ENV VOLUME_CONTROL="linear"
 ENV HTTP_PORT="8080"
 ENV HTTP_BIND_ADDR="0.0.0.0"
+ENV RUST_LOG="warn,libmdns=error"
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
