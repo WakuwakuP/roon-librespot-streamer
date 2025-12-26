@@ -15,13 +15,22 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     pkg-config \
     git \
-    && rm -rf /var/lib/apt/lists/*
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && update-ca-certificates
 
 # Clone and build librespot
 WORKDIR /build
-RUN git clone https://github.com/librespot-org/librespot.git \
-    && cd librespot \
-    && cargo build --release --no-default-features --features "alsa-backend"
+ENV GIT_SSL_NO_VERIFY=1
+ENV RUSTUP_USE_CURL=1
+RUN git clone https://github.com/librespot-org/librespot.git && \
+    cd librespot && \
+    mkdir -p ~/.cargo && \
+    echo "[http]" > ~/.cargo/config.toml && \
+    echo "check-revoke = false" >> ~/.cargo/config.toml && \
+    echo "[net]" >> ~/.cargo/config.toml && \
+    echo "git-fetch-with-cli = true" >> ~/.cargo/config.toml && \
+    cargo build --release --no-default-features --features "alsa-backend"
 
 # Final stage
 FROM debian:bullseye-slim

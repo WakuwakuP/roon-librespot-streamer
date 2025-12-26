@@ -27,11 +27,23 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       
+      - name: Create CI docker-compose configuration
+        run: |
+          # For CI/CD, use build-from-source Dockerfile to avoid SSL certificate issues
+          cat > docker-compose.ci.yml << 'EOF'
+          services:
+            librespot-streamer:
+              build:
+                context: .
+                dockerfile: Dockerfile.build-from-source
+              container_name: roon-librespot-streamer
+          EOF
+      
       - name: Build with docker compose
         id: build
         run: |
           set -o pipefail
-          docker compose build 2>&1 | tee build.log
+          docker compose -f docker-compose.ci.yml build 2>&1 | tee build.log
         continue-on-error: true
       
       - name: Check build result
