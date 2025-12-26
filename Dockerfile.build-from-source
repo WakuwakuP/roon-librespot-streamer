@@ -23,7 +23,9 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /build
 ENV GIT_SSL_NO_VERIFY=1
 ENV RUSTUP_USE_CURL=1
-RUN git clone https://github.com/librespot-org/librespot.git && \
+ENV CURL_CA_BUNDLE=
+RUN echo "insecure" > ~/.curlrc && \
+    git clone https://github.com/librespot-org/librespot.git && \
     cd librespot && \
     mkdir -p ~/.cargo && \
     echo "[http]" > ~/.cargo/config.toml && \
