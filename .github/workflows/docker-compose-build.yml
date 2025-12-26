@@ -1,0 +1,94 @@
+name: Docker Compose Build Check
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - 'Dockerfile'
+      - 'Dockerfile.build-from-source'
+      - 'docker-compose.yml'
+      - 'streaming-server/**'
+      - 'entrypoint.sh'
+      - '.github/workflows/docker-compose-build.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Create CI docker-compose configuration
+        run: |
+          # For CI/CD, use the standard docker-compose.yml
+          echo "Using standard docker-compose.yml for build"
+      
+      - name: Build with docker compose
+        id: build
+        run: |
+          set -o pipefail
+          docker compose build 2>&1 | tee build.log
+        continue-on-error: true
+      
+      - name: Check build result
+        id: check
+        run: |
+          if [[ '${{ steps.build.outcome }}' == 'failure' ]]; then
+            echo "build_failed=true" >> $GITHUB_OUTPUT
+          else
+            echo "build_failed=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Comment PR with error log
+        if: steps.check.outputs.build_failed == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            let buildLog = '';
+            try {
+              buildLog = fs.readFileSync('build.log', 'utf8');
+            } catch (error) {
+              buildLog = 'Error: Could not read build log file.';
+            }
+            const logLines = buildLog.split('\n');
+            
+            // Get last 100 lines or all lines if less than 100
+            const relevantLog = logLines.slice(-100).join('\n');
+            
+            const body = '## ⚠️ Docker Compose Build Failed\n\n' +
+              'The docker compose build failed with the following error:\n\n' +
+              '<details>\n' +
+              '<summary>Build Error Log</summary>\n\n' +
+              '```\n' +
+              relevantLog + '\n' +
+              '```\n\n' +
+              '</details>\n\n' +
+              'Please review the error log above and fix the build issues.';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+      
+      - name: Fail workflow if build failed
+        if: steps.check.outputs.build_failed == 'true'
+        run: |
+          echo "Docker compose build failed. See the comment on the PR for details."
+          exit 1
+      
+      - name: Success message
+        if: steps.check.outputs.build_failed == 'false'
+        run: echo "✅ Docker compose build completed successfully!"
