@@ -23,24 +23,31 @@ if [ "$BACKEND" = "pipe" ]; then
     fi
     
     echo "Starting HTTP streaming server on ${HTTP_BIND_ADDR}:${HTTP_PORT}..."
-    # Start the HTTP streaming server
-    # It reads from stdin (the FLAC stream) and serves it over HTTP
+    # Start the HTTP streaming server in the background
+    # The reader MUST be started before librespot writes to prevent blocking
     (
+        set +e  # Don't exit on errors in this subshell
         while true; do
-            if [ -p "$OUTPUT_FILE" ]; then
-                echo "Converting PCM to FLAC and streaming via HTTP..."
-                ffmpeg -f s16le -ar 44100 -ac 2 -i "$OUTPUT_FILE" \
-                    -c:a flac -compression_level 5 \
-                    -f flac pipe:1 2>/dev/null | streaming-server || true
-            fi
-            echo "Stream ended, restarting in 1 second..."
-            sleep 1
+            echo "Converting PCM to FLAC and streaming via HTTP..."
+            # Read from the named pipe and convert to FLAC
+            ffmpeg -f s16le -ar 44100 -ac 2 -i "$OUTPUT_FILE" \
+                -c:a flac -compression_level 5 \
+                -f flac pipe:1 2>&1 | streaming-server
+            exitcode=$?
+            echo "Stream ended with exit code $exitcode, waiting 2 seconds before restart..."
+            # Longer sleep to allow any pending operations to complete
+            sleep 2
         done
     ) &
     
     STREAM_SERVER_PID=$!
     echo "HTTP streaming server started (PID: $STREAM_SERVER_PID)"
     echo "Stream available at: http://${HTTP_BIND_ADDR}:${HTTP_PORT}/stream"
+    
+    # Wait for the reader to be ready
+    # This is critical: the pipe reader MUST be active before librespot starts writing
+    echo "Waiting for streaming pipeline to initialize..."
+    sleep 3
 fi
 
 # Build librespot command
