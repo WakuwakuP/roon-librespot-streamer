@@ -1,0 +1,57 @@
+FROM rust:1.75-bullseye AS builder
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    libasound2-dev \
+    libpulse-dev \
+    portaudio19-dev \
+    build-essential \
+    pkg-config \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Clone and build librespot
+WORKDIR /build
+RUN git clone https://github.com/librespot-org/librespot.git \
+    && cd librespot \
+    && cargo build --release --no-default-features --features "alsa-backend"
+
+# Final stage
+FROM debian:bullseye-slim
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    libasound2 \
+    ffmpeg \
+    alsa-utils \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy librespot binary from builder
+COPY --from=builder /build/librespot/target/release/librespot /usr/local/bin/librespot
+
+# Create a non-root user
+RUN useradd -m -s /bin/bash librespot
+
+# Create directories for configuration and cache
+RUN mkdir -p /config /cache && chown -R librespot:librespot /config /cache
+
+# Copy entrypoint script
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Switch to non-root user
+USER librespot
+WORKDIR /home/librespot
+
+# Expose Spotify connect port
+EXPOSE 57500
+
+# Set environment variables with defaults
+ENV DEVICE_NAME="Roon Librespot FLAC Streamer"
+ENV BITRATE="320"
+ENV CACHE_SIZE_LIMIT="1G"
+ENV INITIAL_VOLUME="50"
+ENV BACKEND="pipe"
+ENV VOLUME_CONTROL="linear"
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

@@ -1,0 +1,55 @@
+services:
+  librespot-streamer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: roon-librespot-streamer
+    restart: unless-stopped
+    
+    # Network mode host for mDNS/Spotify Connect discovery
+    network_mode: host
+    
+    environment:
+      # Device configuration
+      - DEVICE_NAME=Roon Librespot FLAC Streamer
+      - BITRATE=320
+      - INITIAL_VOLUME=50
+      - VOLUME_CONTROL=linear
+      
+      # Backend configuration (pipe for FLAC streaming, alsa for direct audio)
+      - BACKEND=pipe
+      
+      # Optional: Spotify credentials (not recommended, use Spotify Connect instead)
+      # - SPOTIFY_USERNAME=your_username
+      # - SPOTIFY_PASSWORD=your_password
+      
+      # Cache configuration
+      - CACHE_SIZE_LIMIT=1G
+      
+      # Optional: Credentials file
+      # - CREDENTIALS_FILE=/config/credentials.json
+      
+      # Optional: Additional arguments
+      # - EXTRA_ARGS=--disable-audio-cache
+    
+    volumes:
+      # Persistent cache for better performance
+      - librespot-cache:/cache
+      
+      # Optional: Mount credentials file
+      # - ./credentials.json:/config/credentials.json:ro
+      
+      # Optional: For ALSA backend
+      # - /dev/snd:/dev/snd
+    
+    # Optional: For ALSA backend
+    # devices:
+    #   - /dev/snd:/dev/snd
+    
+    # Optional: Capabilities for audio
+    # cap_add:
+    #   - SYS_NICE
+
+volumes:
+  librespot-cache:
+    driver: local
