@@ -23,10 +23,10 @@ services:
       - HTTP_PORT=8080
       - HTTP_BIND_ADDR=0.0.0.0
       
-      # Logging configuration (suppress noisy mDNS and MP3 demuxer warnings)
+      # Logging configuration (suppress noisy mDNS and Symphonia MP3 demuxer warnings)
       # Options: error, warn, info, debug, trace
       # Module-specific: warn,libmdns=error,symphonia_bundle_mp3=error (default)
-      # MP3 demuxer warnings are non-fatal and don't affect playback
+      # Symphonia MP3 demuxer warnings are non-fatal and don't affect playback
       - RUST_LOG=warn,libmdns=error,symphonia_bundle_mp3=error
       
       # Optional: Stream metadata for Roon/Icecast compatibility

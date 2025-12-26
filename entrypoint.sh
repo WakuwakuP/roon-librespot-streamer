@@ -12,8 +12,8 @@ OUTPUT_DIR="${OUTPUT_DIR:-/tmp/audio}"
 HTTP_PORT="${HTTP_PORT:-8080}"
 HTTP_BIND_ADDR="${HTTP_BIND_ADDR:-0.0.0.0}"
 PIPELINE_INIT_WAIT="${PIPELINE_INIT_WAIT:-3}"
-# Logging configuration - suppress noisy libmdns and symphonia warnings by default
-# symphonia_bundle_mp3::demuxer warnings are non-fatal and can be safely ignored
+# Logging configuration - suppress noisy libmdns and Symphonia MP3 demuxer warnings by default
+# Symphonia MP3 demuxer warnings (symphonia_bundle_mp3) are non-fatal and can be safely ignored
 RUST_LOG="${RUST_LOG:-warn,libmdns=error,symphonia_bundle_mp3=error}"
 
 # Create output directory if using pipe backend
