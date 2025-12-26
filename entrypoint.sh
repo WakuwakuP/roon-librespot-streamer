@@ -32,14 +32,15 @@ if [ "$BACKEND" = "pipe" ]; then
         set +e  # Don't exit on errors in this subshell
         while true; do
             echo "Opening pipe for reading and starting conversion..."
-            # Open and read from the named pipe continuously
-            # ffmpeg will exit when the pipe closes or on error
-            # Redirect stderr to a log file to avoid corrupting the FLAC stream
-            ffmpeg -f s16le -ar 44100 -ac 2 -i "$OUTPUT_FILE" \
-                -c:a flac -compression_level 5 \
-                -f flac pipe:1 2>> /tmp/ffmpeg-error.log | streaming-server
+            # Use stream-mixer.py to ensure continuous audio streaming
+            # The mixer reads from the librespot pipe and injects silence when no data is available
+            # This prevents client timeouts when librespot is idle or has errors
+            python3 /stream-mixer.py "$OUTPUT_FILE" | \
+                ffmpeg -f s16le -ar 44100 -ac 2 -i - \
+                    -c:a flac -compression_level 5 \
+                    -f flac pipe:1 2>> /tmp/ffmpeg-error.log | streaming-server
             exitcode=$?
-            echo "FFmpeg/streaming-server exited with code $exitcode"
+            echo "Stream mixer/FFmpeg/streaming-server exited with code $exitcode"
             
             # Show recent ffmpeg errors if exit code indicates failure
             if [ $exitcode -ne 0 ] && [ -f /tmp/ffmpeg-error.log ]; then
