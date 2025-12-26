@@ -60,19 +60,35 @@ func (s *StreamServer) removeClient(ch chan []byte) {
 
 func (s *StreamServer) broadcast() {
 	buffer := make([]byte, bufferSize)
+	consecutiveErrors := 0
+	maxConsecutiveErrors := 5
 	
 	for {
 		n, err := s.input.Read(buffer)
 		if err != nil {
+			consecutiveErrors++
 			if err == io.EOF {
 				s.logger.Println("Input stream ended")
 			} else {
 				s.logger.Printf("Error reading from input: %v", err)
 			}
-			// Wait a bit before retrying
-			time.Sleep(1 * time.Second)
+			
+			// Implement exponential backoff for repeated errors
+			if consecutiveErrors >= maxConsecutiveErrors {
+				backoff := time.Duration(consecutiveErrors-maxConsecutiveErrors+1) * time.Second
+				if backoff > 30*time.Second {
+					backoff = 30 * time.Second
+				}
+				s.logger.Printf("Multiple consecutive errors (%d), backing off for %v", consecutiveErrors, backoff)
+				time.Sleep(backoff)
+			} else {
+				time.Sleep(1 * time.Second)
+			}
 			continue
 		}
+
+		// Reset error counter on successful read
+		consecutiveErrors = 0
 
 		if n > 0 {
 			data := make([]byte, n)
@@ -85,7 +101,7 @@ func (s *StreamServer) broadcast() {
 					// Successfully sent to client
 				default:
 					// Channel is full, client is slow
-					// We'll let the timeout handler deal with it
+					s.logger.Printf("Warning: Client channel full, dropping packet (slow client)")
 				}
 			}
 			s.clientsLock.RUnlock()
