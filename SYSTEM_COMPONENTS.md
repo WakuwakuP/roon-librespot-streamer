@@ -15,8 +15,8 @@ This document explains all components included in the roon-librespot-streamer Do
 - PCM (Pulse Code Modulation) 形式で音声を出力
 
 **バージョン / Version**: 
-- Commit: 3eca1ab (dev branch, 9 commits after v0.8.0)
-- Date: 2025-12-26
+- Version: v0.8.0 (stable)
+- Release Date: 2024
 
 **機能 / Features**:
 - Spotify Connectデバイスとして表示
