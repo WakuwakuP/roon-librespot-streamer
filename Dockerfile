@@ -9,17 +9,16 @@ RUN apt-get update && apt-get install -y \
     alsa-utils \
     && rm -rf /var/lib/apt/lists/*
 
-# Download pre-built librespot binary
-# Note: Uses -k flag for insecure SSL in CI environments. Remove for production.
-# For x86_64 architecture
+# Download pre-built librespot binary from GitHub releases
+# For x86_64 and aarch64 architectures
 RUN ARCH=$(uname -m) && \
     if [ "$ARCH" = "x86_64" ]; then \
-        curl -k -L https://github.com/librespot-org/librespot/releases/download/v0.4.2/librespot-linux-x86_64.tar.gz -o /tmp/librespot.tar.gz && \
+        curl -L https://github.com/librespot-org/librespot/releases/download/v0.4.2/librespot-linux-x86_64.tar.gz -o /tmp/librespot.tar.gz && \
         tar -xzf /tmp/librespot.tar.gz -C /usr/local/bin/ && \
         chmod +x /usr/local/bin/librespot && \
         rm /tmp/librespot.tar.gz; \
     elif [ "$ARCH" = "aarch64" ]; then \
-        curl -k -L https://github.com/librespot-org/librespot/releases/download/v0.4.2/librespot-linux-aarch64.tar.gz -o /tmp/librespot.tar.gz && \
+        curl -L https://github.com/librespot-org/librespot/releases/download/v0.4.2/librespot-linux-aarch64.tar.gz -o /tmp/librespot.tar.gz && \
         tar -xzf /tmp/librespot.tar.gz -C /usr/local/bin/ && \
         chmod +x /usr/local/bin/librespot && \
         rm /tmp/librespot.tar.gz; \

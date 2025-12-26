@@ -72,12 +72,14 @@ fi
 
 # Add credentials file if provided
 if [ -n "$CREDENTIALS_FILE" ] && [ -f "$CREDENTIALS_FILE" ]; then
-    LIBRESPOT_ARGS+=(--cache /cache --enable-audio-cache)
+    LIBRESPOT_ARGS+=(--credentials "$CREDENTIALS_FILE")
 fi
 
 # Add any extra arguments
 if [ -n "$EXTRA_ARGS" ]; then
-    LIBRESPOT_ARGS+=($EXTRA_ARGS)
+    # Properly split EXTRA_ARGS into array elements
+    read -ra EXTRA_ARGS_ARRAY <<< "$EXTRA_ARGS"
+    LIBRESPOT_ARGS+=("${EXTRA_ARGS_ARRAY[@]}")
 fi
 
 echo "Starting librespot with the following configuration:"
@@ -91,7 +93,7 @@ echo ""
 # Trap to clean up on exit
 cleanup() {
     echo "Shutting down..."
-    if [ -n "$FFMPEG_PID" ]; then
+    if [ -n "$FFMPEG_PID" ] && kill -0 $FFMPEG_PID 2>/dev/null; then
         kill $FFMPEG_PID 2>/dev/null || true
     fi
     if [ "$BACKEND" = "pipe" ] && [ -p "$OUTPUT_FILE" ]; then

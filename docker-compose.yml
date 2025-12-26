@@ -26,6 +26,9 @@ services:
       # Cache configuration
       - CACHE_SIZE_LIMIT=1G
       
+      # Optional: Credentials file
+      # - CREDENTIALS_FILE=/config/credentials.json
+      
       # Optional: Additional arguments
       # - EXTRA_ARGS=--disable-audio-cache
     
@@ -35,7 +38,6 @@ services:
       
       # Optional: Mount credentials file
       # - ./credentials.json:/config/credentials.json:ro
-      # - CREDENTIALS_FILE=/config/credentials.json
       
       # Optional: For ALSA backend
       # - /dev/snd:/dev/snd
