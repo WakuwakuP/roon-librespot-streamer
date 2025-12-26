@@ -9,6 +9,12 @@ services:
     # Network mode host for mDNS/Spotify Connect discovery
     network_mode: host
     
+    # Fix audio key errors by blocking apresolve.spotify.com
+    # This forces librespot to use hardcoded API endpoints
+    # See: https://github.com/librespot-org/librespot/issues/1649
+    extra_hosts:
+      - "apresolve.spotify.com:0.0.0.0"
+    
     environment:
       # Device configuration
       - DEVICE_NAME=Roon Librespot FLAC Streamer
