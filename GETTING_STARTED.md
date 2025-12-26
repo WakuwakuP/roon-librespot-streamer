@@ -92,6 +92,34 @@ Starting librespot with the following configuration:
 
 ![Spotify Connect Device Selection](https://i.imgur.com/placeholder.png)
 
+### Step 5: Access the HTTP Stream (HTTPストリームにアクセス)
+
+音楽が再生されると、HTTPストリームにアクセスできます。
+
+Once music is playing, you can access the HTTP stream:
+
+1. **Webブラウザで確認 (Check in web browser)**:
+   ```
+   http://localhost:8080/
+   ```
+   
+2. **メディアプレイヤーで再生 (Play with media player)**:
+   ```bash
+   # VLC
+   vlc http://localhost:8080/stream
+   
+   # mpv
+   mpv http://localhost:8080/stream
+   
+   # ffplay
+   ffplay http://localhost:8080/stream
+   ```
+
+3. **ヘルスチェック (Health check)**:
+   ```
+   http://localhost:8080/health
+   ```
+
 ## Common Configurations (よく使う設定)
 
 ### Configuration 1: Basic Streaming (基本的なストリーミング)
@@ -106,7 +134,12 @@ environment:
   - DEVICE_NAME=Roon Librespot FLAC Streamer
   - BACKEND=pipe
   - BITRATE=320
+  - HTTP_PORT=8080
 ```
+
+アクセス (Access):
+- ストリーム: `http://localhost:8080/stream`
+- Webインターフェース: `http://localhost:8080/`
 
 ### Configuration 2: Multiple Devices (複数デバイス)
 
