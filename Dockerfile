@@ -54,6 +54,7 @@ RUN apt-get update && apt-get install -y \
     ffmpeg \
     alsa-utils \
     ca-certificates \
+    python3 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy librespot binary from builder
@@ -68,6 +69,10 @@ RUN mkdir -p /config /cache && chown -R librespot:librespot /config /cache
 # Copy streaming server binary from go-builder
 COPY --from=go-builder /build/streaming-server /usr/local/bin/streaming-server
 RUN chmod +x /usr/local/bin/streaming-server
+
+# Copy stream mixer script
+COPY stream-mixer.py /stream-mixer.py
+RUN chmod +x /stream-mixer.py
 
 # Copy entrypoint script
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
