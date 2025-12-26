@@ -29,8 +29,7 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Clone and build librespot (v0.8.0)
-WORKDIR /build
+# Configure cargo and git (separate RUN for better caching)
 RUN mkdir -p ~/.cargo && \
     cat > ~/.cargo/config.toml <<'EOF'
 [http]
@@ -38,13 +37,22 @@ check-revoke = false
 [net]
 git-fetch-with-cli = false
 EOF
-# Pin to specific commit SHA (v0.8.0) for supply chain security
-RUN git config --global http.sslVerify false && \
-    git clone https://github.com/librespot-org/librespot.git && \
-    cd librespot && \
-    git checkout d36f9f1907e8cc9d68a93f8ebc6b627b1bf7267d && \
-    rm -f rust-toolchain.toml && \
-    cargo build --release --no-default-features --features "alsa-backend,native-tls"
+
+# Configure git (separate RUN for better caching)
+RUN git config --global http.sslVerify false
+
+# Clone librespot (latest dev branch) (separate RUN for better caching)
+WORKDIR /build
+RUN git clone https://github.com/librespot-org/librespot.git
+
+# Checkout latest dev branch and prepare for build (separate RUN for better caching)
+WORKDIR /build/librespot
+RUN git checkout dev && \
+    git rev-parse HEAD > /build/librespot-version.txt && \
+    rm -f rust-toolchain.toml
+
+# Build librespot (separate RUN for better caching)
+RUN cargo build --release --no-default-features --features "alsa-backend,native-tls"
 
 # Final stage
 FROM debian:bullseye-slim

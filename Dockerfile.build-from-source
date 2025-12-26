@@ -19,23 +19,31 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/* \
     && update-ca-certificates
 
-# Clone and build librespot (v0.8.0)
-WORKDIR /build
+# Configure environment for SSL workarounds
 ENV GIT_SSL_NO_VERIFY=1
 ENV RUSTUP_USE_CURL=1
 ENV CURL_CA_BUNDLE=
-# Pin to specific commit SHA (v0.8.0) for supply chain security
+
+# Configure curl and cargo (separate RUN for better caching)
 RUN echo "insecure" > ~/.curlrc && \
-    git clone https://github.com/librespot-org/librespot.git && \
-    cd librespot && \
-    git checkout d36f9f1907e8cc9d68a93f8ebc6b627b1bf7267d && \
     mkdir -p ~/.cargo && \
     echo "[http]" > ~/.cargo/config.toml && \
     echo "check-revoke = false" >> ~/.cargo/config.toml && \
     echo "[net]" >> ~/.cargo/config.toml && \
-    echo "git-fetch-with-cli = true" >> ~/.cargo/config.toml && \
-    rm -f rust-toolchain.toml && \
-    cargo build --release --no-default-features --features "alsa-backend,native-tls"
+    echo "git-fetch-with-cli = true" >> ~/.cargo/config.toml
+
+# Clone librespot (latest dev branch) (separate RUN for better caching)
+WORKDIR /build
+RUN git clone https://github.com/librespot-org/librespot.git
+
+# Checkout latest dev branch and prepare for build (separate RUN for better caching)
+WORKDIR /build/librespot
+RUN git checkout dev && \
+    git rev-parse HEAD > /build/librespot-version.txt && \
+    rm -f rust-toolchain.toml
+
+# Build librespot (separate RUN for better caching)
+RUN cargo build --release --no-default-features --features "alsa-backend,native-tls"
 
 # Final stage
 FROM debian:bullseye-slim
