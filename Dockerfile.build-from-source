@@ -34,7 +34,7 @@ RUN echo "insecure" > ~/.curlrc && \
     echo "[net]" >> ~/.cargo/config.toml && \
     echo "git-fetch-with-cli = true" >> ~/.cargo/config.toml && \
     rm -f rust-toolchain.toml && \
-    cargo build --release --no-default-features --features "alsa-backend"
+    cargo build --release --no-default-features --features "alsa-backend,native-tls"
 
 # Final stage
 FROM debian:bullseye-slim
