@@ -11,10 +11,12 @@ FROM rust:1.83-bullseye AS builder
 ENV GIT_SSL_NO_VERIFY=1
 ENV CARGO_HTTP_CHECK_REVOKE=false
 ENV CARGO_NET_GIT_FETCH_WITH_CLI=false
-ENV CARGO_HTTP_CAINFO=/dev/null
+ENV RUSTUP_USE_CURL=1
+ENV CURL_CA_BUNDLE=
 
-# Disable rustup auto-update
-RUN rustup set auto-self-update disable
+# Disable rustup auto-update and configure curl to skip SSL verification
+RUN rustup set auto-self-update disable && \
+    echo "insecure" > ~/.curlrc
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
