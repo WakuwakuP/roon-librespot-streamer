@@ -23,6 +23,12 @@ services:
       - HTTP_PORT=8080
       - HTTP_BIND_ADDR=0.0.0.0
       
+      # Optional: Stream metadata for Roon/Icecast compatibility
+      # - STREAM_NAME=My Spotify Stream
+      # - STREAM_GENRE=Various
+      # - STREAM_DESCRIPTION=Spotify streaming via Librespot
+      # - STREAM_URL=http://my-server.local:8080
+      
       # Optional: Spotify credentials (not recommended, use Spotify Connect instead)
       # - SPOTIFY_USERNAME=your_username
       # - SPOTIFY_PASSWORD=your_password

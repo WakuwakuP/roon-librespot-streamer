@@ -17,6 +17,8 @@ const (
 	bufferSize        = 8192
 	maxClients        = 10
 	clientTimeout     = 30 * time.Second
+	flacBitrate       = "1411" // FLAC 44.1kHz 16-bit stereo bitrate in kbps
+	notPubliclyListed = "0"    // Stream is not publicly listed
 )
 
 type StreamServer struct {
@@ -115,6 +117,21 @@ func (s *StreamServer) handleStream(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("Transfer-Encoding", "chunked")
+	
+	// Add Icecast-compatible headers for Roon and other internet radio clients
+	w.Header().Set("icy-name", getEnvOrDefault("STREAM_NAME", "Roon Librespot FLAC Streamer"))
+	w.Header().Set("icy-genre", getEnvOrDefault("STREAM_GENRE", "Spotify"))
+	w.Header().Set("icy-url", getEnvOrDefault("STREAM_URL", "https://github.com/WakuwakuP/roon-librespot-streamer"))
+	w.Header().Set("icy-br", flacBitrate)
+	w.Header().Set("icy-pub", notPubliclyListed)
+	w.Header().Set("icy-description", getEnvOrDefault("STREAM_DESCRIPTION", "Spotify via Librespot streaming in FLAC"))
+	
+	// Check if client supports Icecast metadata
+	if r.Header.Get("Icy-MetaData") == "1" {
+		// Client supports metadata, but we'll set metaint to 0 for now (no inline metadata)
+		// FLAC streams typically don't use inline metadata like MP3 streams do
+		w.Header().Set("icy-metaint", "0")
+	}
 
 	// Check if we can flush
 	flusher, ok := w.(http.Flusher)
@@ -286,6 +303,14 @@ func (s *StreamServer) handleRoot(w http.ResponseWriter, r *http.Request) {
 </html>`, clientCount, maxClients, getHostname(), getPort(), getHostname(), getPort(), getHostname(), getPort(), maxClients, clientTimeout)
 
 	fmt.Fprint(w, html)
+}
+
+// getEnvOrDefault returns the value of the environment variable key, or defaultValue if the variable is not set or empty.
+func getEnvOrDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }
 
 func getHostname() string {
