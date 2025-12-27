@@ -199,7 +199,7 @@ RUN curl -L https://github.com/.../librespot -o /usr/local/bin/librespot
 FROM rust:1.85-bullseye AS builder
 RUN git clone https://github.com/librespot-org/librespot.git && \
     cd librespot && \
-    git checkout 3eca1ab && \
+    git checkout v0.8.0 && \
     cargo build --release \
         --no-default-features \
         --features "alsa-backend,with-libmdns,native-tls"
@@ -209,7 +209,7 @@ RUN git clone https://github.com/librespot-org/librespot.git && \
 1. Rust 1.85環境を準備
 2. 必要なビルド依存関係をインストール
 3. librespotをクローン
-4. 特定のコミット (3eca1ab) をチェックアウト
+4. 安定版 (v0.8.0) をチェックアウト
 5. 必要な機能のみを有効化してビルド:
    - `alsa-backend`: ALSAオーディオ出力
    - `with-libmdns`: mDNS discovery

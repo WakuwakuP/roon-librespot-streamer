@@ -40,11 +40,11 @@ check-revoke = false
 git-fetch-with-cli = false
 EOF
 
-# Clone, checkout, and build librespot - pinned to latest dev (commit 3eca1ab, 2025-12-26)
+# Clone, checkout, and build librespot - pinned to stable v0.8.0
 RUN git config --global http.sslVerify false && \
     git clone https://github.com/librespot-org/librespot.git && \
     cd librespot && \
-    git checkout 3eca1ab54c9bf9452e97807d32a54bcc7dc23356 && \
+    git checkout v0.8.0 && \
     rm -f rust-toolchain.toml && \
     cargo build --release --no-default-features --features "alsa-backend,with-libmdns,native-tls"
 

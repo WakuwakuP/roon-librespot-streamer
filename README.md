@@ -78,13 +78,13 @@ This project provides two Dockerfiles:
    - Suitable for x86_64 and aarch64 architectures
    - Build time: ~30 seconds
    - Requires network access to download binaries
-   - Uses librespot commit 3eca1ab (9 commits after v0.8.0, dated 2025-12-26)
+   - Uses librespot stable version v0.8.0
 
 2. **Dockerfile.build-from-source** - Builds librespot from source for maximum compatibility
    - Build time: ~15-30 minutes (Rust compilation)
    - Requires more disk space and memory
    - Works on any architecture supported by Rust
-   - Uses librespot commit 3eca1ab (9 commits after v0.8.0, dated 2025-12-26)
+   - Uses librespot stable version v0.8.0
 
 To use the default (binary) build:
 ```bash
@@ -355,7 +355,7 @@ If you see errors like "Track should be available, but no alternatives found" or
 ```
 
 **解決策 (Solution)**:
-1. Update to the latest version of this project (uses librespot commit 3eca1ab, which includes recent fixes)
+1. Update to the latest version of this project (uses librespot stable version v0.8.0)
 2. Rebuild the Docker image:
    ```bash
    docker-compose down
@@ -367,7 +367,7 @@ If you see errors like "Track should be available, but no alternatives found" or
    docker-compose up -d
    ```
 
-**注意 (Note)**: This project now uses librespot commit 3eca1ab from the dev branch (9 commits after v0.8.0), which includes the most recent fixes for track availability and playback issues.
+**注意 (Note)**: This project uses librespot stable version v0.8.0 (released November 10, 2025), which provides reliable Spotify Connect functionality and audio playback.
 
 ### ログの調整 (Adjusting Log Levels)
 
