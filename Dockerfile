@@ -1,4 +1,4 @@
-FROM rust:1.85-slim as builder
+FROM rust:1.85-slim AS builder
 
 # Install build dependencies (including avahi for mDNS/Zeroconf support)
 RUN apt-get update && apt-get install -y \
@@ -28,7 +28,7 @@ RUN git config --global http.sslVerify false && \
 	echo 'check-revoke = false' >> /root/.cargo/config.toml && \
 	echo '[net]' >> /root/.cargo/config.toml && \
 	echo 'git-fetch-with-cli = true' >> /root/.cargo/config.toml && \
-	cargo build --release --no-default-features --features "with-dns-sd"
+	cargo build --release --no-default-features --features "with-dns-sd,native-tls"
 
 # Final stage
 FROM node:18-slim
