@@ -11,6 +11,11 @@ const STREAM_FORMAT = process.env.STREAM_FORMAT || 'flac';
 const BITRATE = process.env.BITRATE || '320k';
 const SILENCE_ON_NO_INPUT = process.env.SILENCE_ON_NO_INPUT !== 'false'; // Default to true
 
+// Audio constants
+const SAMPLE_RATE = 44100;
+const CHANNEL_LAYOUT = 'stereo';
+const CHANNELS = 2;
+
 let currentClients = new Set();
 
 // Rate limiting middleware to prevent abuse
@@ -62,14 +67,17 @@ app.get('/stream', (req, res) => {
     // Generate silence when there's no input from FIFO
     // This approach mixes FIFO input with a continuous silence generator
     // When FIFO has data, it passes through; when empty, silence is output
+    const silenceSource = `anullsrc=channel_layout=${CHANNEL_LAYOUT}:sample_rate=${SAMPLE_RATE}`;
+    const filterComplex = '[1:a][0:a]amix=inputs=2:duration=longest:dropout_transition=0[out]';
+    
     ffmpegArgs = [
       '-f', 'lavfi',
-      '-i', 'anullsrc=channel_layout=stereo:sample_rate=44100',  // Continuous silence source
+      '-i', silenceSource,           // Continuous silence source
       '-f', 's16le',                 // Input format from librespot (raw PCM)
-      '-ar', '44100',                // Sample rate
-      '-ac', '2',                    // Stereo
+      '-ar', String(SAMPLE_RATE),    // Sample rate
+      '-ac', String(CHANNELS),       // Channel count
       '-i', FIFO_PATH,               // Input from FIFO
-      '-filter_complex', '[1:a][0:a]amix=inputs=2:duration=longest:dropout_transition=0[out]',
+      '-filter_complex', filterComplex,
       '-map', '[out]',
       '-f', STREAM_FORMAT,           // Output format
     ];
@@ -78,8 +86,8 @@ app.get('/stream', (req, res) => {
     ffmpegArgs = [
       '-re',                         // Read input at native frame rate
       '-f', 's16le',                 // Input format from librespot (raw PCM)
-      '-ar', '44100',                // Sample rate
-      '-ac', '2',                    // Stereo
+      '-ar', String(SAMPLE_RATE),    // Sample rate
+      '-ac', String(CHANNELS),       // Channel count
       '-i', FIFO_PATH,               // Input from FIFO
       '-f', STREAM_FORMAT,           // Output format
     ];
