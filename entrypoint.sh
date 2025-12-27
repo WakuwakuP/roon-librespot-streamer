@@ -124,7 +124,14 @@ echo "  Volume Control: $VOLUME_CONTROL"
 echo "  Initial Volume: $INITIAL_VOLUME"
 echo "  Log Level: $RUST_LOG"
 if [ "$BACKEND" = "pipe" ]; then
+    echo ""
+    echo "================================================"
     echo "  HTTP Streaming: http://${HTTP_BIND_ADDR}:${HTTP_PORT}/stream"
+    echo "  Web Interface:  http://${HTTP_BIND_ADDR}:${HTTP_PORT}/"
+    echo ""
+    echo "  For Roon: Add this URL to Live Radio"
+    echo "  Stream will be always available (silence when idle)"
+    echo "================================================"
 fi
 echo ""
 

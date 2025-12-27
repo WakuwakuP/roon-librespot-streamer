@@ -27,12 +27,17 @@ A Docker image that streams audio received from Spotify via librespot in FLAC fo
 - 🐳 [Docker Image Guide](DOCKER_IMAGE_GUIDE.md) - Dockerイメージの構造と最適化
 - 🔧 [Architecture Details](ARCHITECTURE.md) - アーキテクチャの技術詳細
 - 🌐 [HTTP Streaming Guide](HTTP_STREAMING_GUIDE.md) - HTTPストリーミングの詳細
+- 🔧 [Troubleshooting Guide](TROUBLESHOOTING.md) - トラブルシューティングガイド
 
 📖 **New to this project? See the [Getting Started Guide](GETTING_STARTED.md) for step-by-step instructions!**
+
+⚠️ **Having issues? Check the [Troubleshooting Guide](TROUBLESHOOTING.md) for solutions to common problems!**
 
 ## Quick Start
 
 ### Using Docker Compose (Recommended)
+
+**Docker Compose is the recommended method** as it includes the necessary configuration to fix audio key errors.
 
 1. Clone this repository:
 ```bash
@@ -51,6 +56,12 @@ docker compose up -d
 
 4. Access the FLAC stream at `http://localhost:8080/stream` or view the web interface at `http://localhost:8080/`
 
+**If you experience audio key errors:** Clear the cache and restart:
+```bash
+docker-compose down -v
+docker-compose up -d
+```
+
 ### Using Docker
 
 Build and run the image:
@@ -66,7 +77,7 @@ docker run -d \
   roon-librespot-streamer
 ```
 
-**Note:** The `--add-host apresolve.spotify.com:0.0.0.0` flag fixes audio key errors. See [Troubleshooting](#audio-key-errors) for more details.
+**⚠️ IMPORTANT:** The `--add-host apresolve.spotify.com:0.0.0.0` flag is **REQUIRED** to fix audio key errors. If you experience issues, also clear the cache volume. See [Troubleshooting](#audio-key-errors) for details.
 
 ### Build Options
 
@@ -247,6 +258,44 @@ environment:
   - STREAM_URL=http://my-server.local:8080
 ```
 
+**Roonで認識されない場合のトラブルシューティング (Troubleshooting Roon Recognition):**
+
+If Roon cannot detect or recognize the stream:
+
+1. **Verify stream is accessible:**
+   ```bash
+   # Test with curl
+   curl -I http://YOUR_IP:8080/stream
+   
+   # You should see Icecast headers:
+   # icy-name: Roon Librespot FLAC Streamer
+   # icy-genre: Spotify
+   # Content-Type: audio/flac
+   ```
+
+2. **Test with VLC or another player first:**
+   ```bash
+   vlc http://YOUR_IP:8080/stream
+   ```
+   If VLC can play the stream, Roon should be able to detect it.
+
+3. **Ensure the stream is actually streaming:**
+   - The stream mixer always provides audio (silence when idle, music when playing)
+   - Check logs: `docker-compose logs -f` or `docker logs -f roon-librespot-streamer`
+   - You should see `[StreamMixer]` messages indicating the stream is active
+
+4. **Check network connectivity:**
+   - Ensure Roon can reach the container's IP address
+   - If using Docker Desktop on Mac/Windows, use `host.docker.internal` instead of `localhost`
+   - Verify no firewall is blocking port 8080
+
+5. **Try entering the stream URL with a trailing slash:**
+   - Some clients prefer: `http://YOUR_IP:8080/stream/`
+
+6. **Wait a moment after starting the container:**
+   - The streaming pipeline takes 3 seconds to initialize (configurable via `PIPELINE_INIT_WAIT`)
+   - If you try to add the stream immediately, it might not be ready yet
+
 ## Usage Examples
 
 ### カスタムデバイス名で起動 (Start with custom device name)
@@ -283,6 +332,16 @@ environment:
 
 ## Troubleshooting
 
+**📖 For comprehensive troubleshooting, see the [Troubleshooting Guide](TROUBLESHOOTING.md)**
+
+The troubleshooting guide includes detailed solutions for:
+- Audio key errors
+- Stream not recognized by Roon
+- Connection issues
+- Playback problems
+
+Below are quick fixes for common issues:
+
 ### デバイスが見つからない (Device not found)
 
 1. `--network host`が設定されているか確認してください (Ensure `--network host` is set)
@@ -312,17 +371,21 @@ If you see errors like "error audio key 0 1" or "Service unavailable { audio key
 [WARN librespot_playback::player] Unable to load key, continuing without decryption: Service unavailable { audio key error }
 [ERROR librespot_playback::player] Unable to read audio file: Symphonia Decoder Error: Deadline expired before operation could complete
 [ERROR librespot_playback::player] Skipping to next track, unable to load track
+[WARN librespot_core::apresolve] Failed to resolve all access points, using fallbacks
 ```
 
 **解決策 (Solution)**:
 
-This is caused by DNS resolution issues with `apresolve.spotify.com`. The fix is to block this domain, forcing librespot to use hardcoded API endpoints.
+This is caused by DNS resolution issues with `apresolve.spotify.com`. The fix requires blocking this domain AND clearing the cache.
 
-**For Docker Compose users** (already configured by default):
-The `docker-compose.yml` file includes the fix via `extra_hosts`. Just ensure you're using the latest version:
+#### Step 1: Ensure apresolve.spotify.com is Blocked
+
+**For Docker Compose users** (recommended - already configured by default):
+The `docker-compose.yml` file includes the fix via `extra_hosts`. Ensure you're using the latest version:
 ```bash
 docker-compose down
-docker-compose pull
+# Optional: Pull latest image if using a pre-built image from a registry
+# docker-compose pull
 docker-compose up -d
 ```
 
@@ -344,7 +407,56 @@ Add the following line to your `/etc/hosts` file (requires root):
 echo "0.0.0.0 apresolve.spotify.com" | sudo tee -a /etc/hosts
 ```
 
-**注意 (Note)**: This workaround is based on solutions from the librespot community and has been confirmed to fix audio key errors. See [librespot issue #1649](https://github.com/librespot-org/librespot/issues/1649) for more details.
+#### Step 2: Clear Cache and Restart (IMPORTANT)
+
+Even with apresolve blocked, you MUST clear the cache if errors persist:
+
+**For Docker Compose users**:
+```bash
+# Stop and remove containers and volumes
+docker-compose down -v
+
+# Start fresh
+docker-compose up -d
+```
+
+**For Docker run users**:
+```bash
+# Stop and remove container
+docker stop roon-librespot-streamer
+docker rm roon-librespot-streamer
+
+# Remove cache volume
+docker volume rm librespot-cache
+
+# Restart with the same docker run command (with --add-host flag)
+```
+
+#### Step 3: Reconnect from Spotify
+
+After restarting with cleared cache:
+1. Open your Spotify app (mobile/desktop)
+2. Start playing any track
+3. Select "Roon Librespot FLAC Streamer" from available devices
+4. The stream should start without errors
+
+#### Verification
+
+To verify the fix is working, check the logs:
+```bash
+# For docker-compose
+docker-compose logs -f
+
+# For docker run
+docker logs -f roon-librespot-streamer
+```
+
+You should see:
+- ✅ "Failed to resolve all access points, using fallbacks" (this is EXPECTED and means the block is working)
+- ✅ No "error audio key" messages after connecting
+- ✅ Audio playing successfully
+
+**注意 (Note)**: This workaround is based on solutions from the librespot community and has been confirmed to fix audio key errors. The "Failed to resolve all access points, using fallbacks" message is NORMAL and indicates the fix is working correctly. See [librespot issue #1649](https://github.com/librespot-org/librespot/issues/1649) for more details.
 
 ### トラックが再生できない / Track Unavailable Errors
 
