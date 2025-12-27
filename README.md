@@ -228,11 +228,14 @@ This streaming server sends Icecast-compatible headers, allowing it to be regist
 **Roonへの登録手順 (How to register in Roon):**
 
 1. このコンテナを起動する (Start this container)
-2. Spotifyアプリでデバイスに接続し、音楽を再生する (Connect to the device in Spotify and play music)
-3. Roonアプリを開く (Open Roon app)
-4. Settings → Add Radio → Live Radio を選択 (Select Settings → Add Radio → Live Radio)
-5. ストリームURLを入力: `http://{YOUR_IP}:8080/stream` (Enter stream URL: `http://{YOUR_IP}:8080/stream`)
-6. Roonがストリーム情報を自動検出します (Roon will automatically detect stream info)
+2. Roonアプリを開く (Open Roon app)
+3. Settings → Add Radio → Live Radio を選択 (Select Settings → Add Radio → Live Radio)
+4. ストリームURLを入力: `http://{YOUR_IP}:8080/stream` (Enter stream URL: `http://{YOUR_IP}:8080/stream`)
+5. Roonがストリーム情報を自動検出します (Roon will automatically detect stream info)
+
+**注意 (Note):** ストリームは常に利用可能で、Spotifyで音楽を再生していなくても登録できます。音楽を再生していない時は無音が配信されます。
+
+**Note:** The stream is always available and can be registered even when no music is playing on Spotify. Silence will be streamed when idle.
 
 **カスタムストリーム情報 (Custom stream information):**
 
