@@ -9,17 +9,6 @@ if [ ! -p "$FIFO_PATH" ]; then
     mkfifo "$FIFO_PATH"
 fi
 
-# Start avahi-daemon for mDNS/Zeroconf (Spotify Connect discovery)
-echo "Starting avahi-daemon for Spotify Connect discovery..."
-# Create required directories
-mkdir -p /var/run/dbus /var/run/avahi-daemon
-# Start dbus if not running (required by avahi)
-if [ ! -e /var/run/dbus/pid ]; then
-    dbus-daemon --system --fork 2>/dev/null || true
-fi
-# Start avahi-daemon
-avahi-daemon --daemonize --no-chroot 2>/dev/null || echo "Warning: avahi-daemon failed to start"
-
 # Function to cleanup on exit
 cleanup() {
     echo "Shutting down..."

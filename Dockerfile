@@ -4,7 +4,6 @@ FROM rust:1.85-slim as builder
 RUN apt-get update && apt-get install -y \
 	build-essential \
 	libasound2-dev \
-	libavahi-compat-libdnssd-dev \
 	libssl-dev \
 	pkg-config \
 	git \
@@ -28,20 +27,15 @@ RUN git config --global http.sslVerify false && \
 	echo 'check-revoke = false' >> /root/.cargo/config.toml && \
 	echo '[net]' >> /root/.cargo/config.toml && \
 	echo 'git-fetch-with-cli = true' >> /root/.cargo/config.toml && \
-	cargo build --release --no-default-features --features with-dns-sd,native-tls
+	cargo build --release --no-default-features --features native-tls
 
 # Final stage
 FROM node:18-slim
 
 # Install runtime dependencies
-# libavahi-compat-libdnssd1 is required for Spotify Connect (Zeroconf/mDNS) discovery
 RUN apt-get update && apt-get install -y \
 	ffmpeg \
 	curl \
-	dbus \
-	avahi-daemon \
-	libavahi-compat-libdnssd1 \
-	libnss-mdns \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Copy librespot binary from builder
