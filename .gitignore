@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+streaming-server/node_modules/
+package-lock.json
+streaming-server/package-lock.json
+
+# Build artifacts
+*.tar.gz
+build/
+dist/
+
+# Logs
+*.log
+logs/
+build.log
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker
+.dockerignore
+
+# Temporary files
+tmp/
+temp/
+*.tmp
