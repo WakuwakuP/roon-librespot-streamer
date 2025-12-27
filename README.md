@@ -384,7 +384,8 @@ This is caused by DNS resolution issues with `apresolve.spotify.com`. The fix re
 The `docker-compose.yml` file includes the fix via `extra_hosts`. Ensure you're using the latest version:
 ```bash
 docker-compose down
-docker-compose pull  # If using a pre-built image
+# Optional: Pull latest image if using a pre-built image from a registry
+# docker-compose pull
 docker-compose up -d
 ```
 

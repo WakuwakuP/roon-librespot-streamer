@@ -106,7 +106,12 @@ If running librespot without Docker:
 
 2. **Clear cache:**
    ```bash
-   rm -rf /path/to/cache/*
+   # Find and clear librespot cache (typical locations)
+   # For systemd service:
+   rm -rf ~/.cache/librespot/*
+   
+   # For custom installations, check your librespot --cache parameter
+   # and clear that directory
    ```
 
 3. **Restart librespot service**
@@ -128,9 +133,15 @@ If errors persist after following the above steps:
 
 2. **Verify cache was cleared:**
    ```bash
-   docker volume ls | grep librespot-cache
+   # List volumes with librespot in the name
+   docker volume ls | grep -i librespot
    ```
-   If the volume wasn't removed, use `docker volume rm` to remove it manually.
+   If the volume wasn't removed, identify the exact volume name and remove it:
+   ```bash
+   # Remove specific volume (use the name from above)
+   docker volume rm <volume_name>
+   ```
+   Note: Volume names may be prefixed with the project directory (e.g., `roon-librespot-streamer_librespot-cache`).
 
 3. **Check network connectivity:**
    ```bash
