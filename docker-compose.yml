@@ -18,7 +18,7 @@ services:
 
       # Streaming server settings
       - STREAM_FORMAT=flac
-      - STREAMING_PORT=3000
+      - STREAMING_PORT=8080
       - SILENCE_ON_NO_INPUT=true # Stream silence when no audio from librespot
 
       # Volume settings (0-100)
@@ -39,7 +39,7 @@ services:
     # Note: ports mapping is not used with network_mode: host
     # The container uses the host's network directly
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
