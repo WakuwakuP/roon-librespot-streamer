@@ -1,6 +1,13 @@
 #!/bin/bash
 set -e
 
+# Start D-Bus and Avahi for mDNS/Zeroconf (Spotify Connect discovery)
+echo "Starting D-Bus and Avahi daemon for mDNS..."
+mkdir -p /var/run/dbus
+dbus-daemon --system --fork 2>/dev/null || true
+avahi-daemon --daemonize --no-chroot 2>/dev/null || true
+sleep 1
+
 # Create FIFO pipe for audio data
 FIFO_PATH=${FIFO_PATH:-/tmp/librespot-audio}
 
