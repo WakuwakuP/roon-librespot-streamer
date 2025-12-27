@@ -4,6 +4,7 @@ FROM rust:1.75-slim as builder
 RUN apt-get update && apt-get install -y \
 	build-essential \
 	libasound2-dev \
+	libavahi-compat-libdnssd-dev \
 	pkg-config \
 	git \
 	ca-certificates \
@@ -11,7 +12,9 @@ RUN apt-get update && apt-get install -y \
 
 # Build librespot from source
 WORKDIR /build
-ARG LIBRESPOT_VERSION=v0.4.2
+# Use latest stable version - v0.4.2 is too old and doesn't work with current Spotify API
+# v0.5.0 or later is required for current Spotify authentication
+ARG LIBRESPOT_VERSION=v0.8.0
 # Note: SSL verification disabled as temporary workaround for CI/CD environments
 # with self-signed certificates. In production, this image should be built in
 # a properly configured environment with valid certificates.
@@ -24,7 +27,7 @@ RUN git config --global http.sslVerify false && \
 	echo 'check-revoke = false' >> /root/.cargo/config.toml && \
 	echo '[net]' >> /root/.cargo/config.toml && \
 	echo 'git-fetch-with-cli = true' >> /root/.cargo/config.toml && \
-	cargo build --release --no-default-features
+	cargo build --release --no-default-features --features with-dns-sd
 
 # Final stage
 FROM node:18-slim
