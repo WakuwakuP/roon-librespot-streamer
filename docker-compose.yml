@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   roon-librespot-streamer:
@@ -7,30 +7,31 @@ services:
       dockerfile: Dockerfile
     container_name: roon-librespot-streamer
     restart: unless-stopped
+    # Required for mDNS/Zeroconf (Spotify Connect discovery) - Linux only
     network_mode: host
     environment:
       # Spotify Connect device name (as shown in Spotify)
       - DEVICE_NAME=Spotify Connect (Roon)
-      
+
       # Audio quality settings
       - BITRATE=320
-      
+
       # Streaming server settings
       - STREAM_FORMAT=flac
       - STREAMING_PORT=3000
-      - SILENCE_ON_NO_INPUT=true  # Stream silence when no audio from librespot
-      
+      - SILENCE_ON_NO_INPUT=true # Stream silence when no audio from librespot
+
       # Volume settings (0-100)
       - INITIAL_VOLUME=100
       - VOLUME_CTRL=linear
-      
+
       # Internal settings (usually no need to change)
       - FIFO_PATH=/tmp/librespot-audio
-      
+
       # Additional librespot arguments (optional)
       # - LIBRESPOT_ARGS=--disable-audio-cache
-    ports:
-      - "3000:3000"
+    # Note: ports mapping is not used with network_mode: host
+    # The container uses the host's network directly
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s

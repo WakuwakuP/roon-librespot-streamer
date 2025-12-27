@@ -2,12 +2,12 @@ FROM rust:1.75-slim as builder
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
-    build-essential \
-    libasound2-dev \
-    pkg-config \
-    git \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+	build-essential \
+	libasound2-dev \
+	pkg-config \
+	git \
+	ca-certificates \
+	&& rm -rf /var/lib/apt/lists/*
 
 # Build librespot from source
 WORKDIR /build
@@ -17,22 +17,28 @@ ARG LIBRESPOT_VERSION=v0.4.2
 # a properly configured environment with valid certificates.
 ENV CARGO_HTTP_CHECK_REVOKE=false
 RUN git config --global http.sslVerify false && \
-    git clone --branch ${LIBRESPOT_VERSION} --depth 1 https://github.com/librespot-org/librespot.git && \
-    cd librespot && \
-    mkdir -p /root/.cargo && \
-    echo '[http]' > /root/.cargo/config.toml && \
-    echo 'check-revoke = false' >> /root/.cargo/config.toml && \
-    echo '[net]' >> /root/.cargo/config.toml && \
-    echo 'git-fetch-with-cli = true' >> /root/.cargo/config.toml && \
-    cargo build --release --no-default-features
+	git clone --branch ${LIBRESPOT_VERSION} --depth 1 https://github.com/librespot-org/librespot.git && \
+	cd librespot && \
+	mkdir -p /root/.cargo && \
+	echo '[http]' > /root/.cargo/config.toml && \
+	echo 'check-revoke = false' >> /root/.cargo/config.toml && \
+	echo '[net]' >> /root/.cargo/config.toml && \
+	echo 'git-fetch-with-cli = true' >> /root/.cargo/config.toml && \
+	cargo build --release --no-default-features
 
 # Final stage
 FROM node:18-slim
 
 # Install runtime dependencies
+# libavahi-compat-libdnssd1 is required for Spotify Connect (Zeroconf/mDNS) discovery
 RUN apt-get update && apt-get install -y \
-    ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
+	ffmpeg \
+	curl \
+	dbus \
+	avahi-daemon \
+	libavahi-compat-libdnssd1 \
+	libnss-mdns \
+	&& rm -rf /var/lib/apt/lists/*
 
 # Copy librespot binary from builder
 COPY --from=builder /build/librespot/target/release/librespot /usr/local/bin/librespot

@@ -15,8 +15,13 @@ const SILENCE_ON_NO_INPUT = process.env.SILENCE_ON_NO_INPUT !== 'false'; // Defa
 const SAMPLE_RATE = 44100;
 const CHANNEL_LAYOUT = 'stereo';
 const CHANNELS = 2;
+const BYTES_PER_SAMPLE = 2; // 16-bit = 2 bytes
+const BYTES_PER_SECOND = SAMPLE_RATE * CHANNELS * BYTES_PER_SAMPLE;
 
 let currentClients = new Set();
+
+// Shared audio state
+let isReceivingAudio = false;
 
 // Rate limiting middleware to prevent abuse
 const limiter = rateLimit({
@@ -29,7 +34,7 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // Helper function to cleanup FFmpeg process
-function cleanupFFmpeg(ffmpeg, res) {
+function cleanupFFmpeg(ffmpeg, res, fifoReadStream, silenceInterval) {
   // Prevent multiple cleanup attempts
   if (res._cleanedUp) {
     return;
@@ -38,8 +43,21 @@ function cleanupFFmpeg(ffmpeg, res) {
   
   currentClients.delete(res);
   
+  if (silenceInterval) {
+    clearInterval(silenceInterval);
+  }
+  
+  if (fifoReadStream) {
+    try {
+      fifoReadStream.destroy();
+    } catch (e) {
+      // Ignore
+    }
+  }
+  
   if (ffmpeg && !ffmpeg.killed) {
     try {
+      ffmpeg.stdin.end();
       ffmpeg.kill('SIGTERM');
     } catch (error) {
       // Ignore errors if process already exited
@@ -48,12 +66,20 @@ function cleanupFFmpeg(ffmpeg, res) {
   }
 }
 
+// Generate silence buffer
+function generateSilence(durationMs = 100) {
+  const numSamples = Math.floor((SAMPLE_RATE * durationMs) / 1000);
+  const bufferSize = numSamples * CHANNELS * BYTES_PER_SAMPLE;
+  return Buffer.alloc(bufferSize, 0);
+}
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     clients: currentClients.size,
-    fifo: fs.existsSync(FIFO_PATH)
+    fifo: fs.existsSync(FIFO_PATH),
+    receivingAudio: isReceivingAudio
   });
 });
 
@@ -72,38 +98,14 @@ app.get('/stream', (req, res) => {
   // Track this client
   currentClients.add(res);
   
-  // Build FFmpeg command
-  let ffmpegArgs;
-  
-  if (SILENCE_ON_NO_INPUT) {
-    // Generate silence when there's no input from FIFO
-    // This approach mixes FIFO input with a continuous silence generator
-    // When FIFO has data, it passes through; when empty, silence is output
-    const silenceSource = `anullsrc=channel_layout=${CHANNEL_LAYOUT}:sample_rate=${SAMPLE_RATE}`;
-    const filterComplex = '[1:a][0:a]amix=inputs=2:duration=longest:dropout_transition=0[out]';
-    
-    ffmpegArgs = [
-      '-f', 'lavfi',
-      '-i', silenceSource,           // Continuous silence source
-      '-f', 's16le',                 // Input format from librespot (raw PCM)
-      '-ar', String(SAMPLE_RATE),    // Sample rate
-      '-ac', String(CHANNELS),       // Channel count
-      '-i', FIFO_PATH,               // Input from FIFO
-      '-filter_complex', filterComplex,
-      '-map', '[out]',
-      '-f', STREAM_FORMAT,           // Output format
-    ];
-  } else {
-    // Original behavior - block when no input
-    ffmpegArgs = [
-      '-re',                         // Read input at native frame rate
-      '-f', 's16le',                 // Input format from librespot (raw PCM)
-      '-ar', String(SAMPLE_RATE),    // Sample rate
-      '-ac', String(CHANNELS),       // Channel count
-      '-i', FIFO_PATH,               // Input from FIFO
-      '-f', STREAM_FORMAT,           // Output format
-    ];
-  }
+  // Build FFmpeg command - always read from stdin (pipe)
+  let ffmpegArgs = [
+    '-f', 's16le',                 // Input format (raw PCM)
+    '-ar', String(SAMPLE_RATE),    // Sample rate
+    '-ac', String(CHANNELS),       // Channel count
+    '-i', 'pipe:0',                // Read from stdin
+    '-f', STREAM_FORMAT,           // Output format
+  ];
   
   // Add bitrate only for lossy formats (not for FLAC or WAV)
   if (STREAM_FORMAT !== 'flac' && STREAM_FORMAT !== 'wav') {
@@ -117,48 +119,162 @@ app.get('/stream', (req, res) => {
   
   ffmpegArgs.push('-');  // Output to stdout
   
-  // Start FFmpeg to read from FIFO and encode to desired format
+  // Start FFmpeg
   const ffmpeg = spawn('ffmpeg', ffmpegArgs);
   
   // Pipe FFmpeg output to HTTP response
   ffmpeg.stdout.pipe(res);
   
+  // Variables for this client's stream
+  let fifoReadStream = null;
+  let silenceInterval = null;
+  let hasReceivedFifoData = false;
+  let fifoOpenTimeout = null;
+  
+  // Function to write silence to FFmpeg when no audio
+  function startSilenceGenerator() {
+    if (silenceInterval) return;
+    
+    const silenceBuffer = generateSilence(100); // 100ms of silence
+    silenceInterval = setInterval(() => {
+      if (!hasReceivedFifoData && ffmpeg && !ffmpeg.killed && ffmpeg.stdin.writable) {
+        try {
+          ffmpeg.stdin.write(silenceBuffer);
+        } catch (e) {
+          // Ignore write errors
+        }
+      }
+    }, 100);
+  }
+  
+  // Function to stop silence generator
+  function stopSilenceGenerator() {
+    if (silenceInterval) {
+      clearInterval(silenceInterval);
+      silenceInterval = null;
+    }
+    if (fifoOpenTimeout) {
+      clearTimeout(fifoOpenTimeout);
+      fifoOpenTimeout = null;
+    }
+  }
+  
+  // Try to open FIFO for reading
+  function openFifo() {
+    if (res._cleanedUp) return;
+    
+    try {
+      // Open FIFO in non-blocking read mode
+      const fd = fs.openSync(FIFO_PATH, fs.constants.O_RDONLY | fs.constants.O_NONBLOCK);
+      fifoReadStream = fs.createReadStream(null, { fd, highWaterMark: 65536 });
+      
+      fifoReadStream.on('data', (chunk) => {
+        hasReceivedFifoData = true;
+        isReceivingAudio = true;
+        
+        if (ffmpeg && !ffmpeg.killed && ffmpeg.stdin.writable) {
+          try {
+            ffmpeg.stdin.write(chunk);
+          } catch (e) {
+            // Ignore write errors
+          }
+        }
+      });
+      
+      fifoReadStream.on('end', () => {
+        // FIFO stream ended (writer closed), silently retry
+        hasReceivedFifoData = false;
+        isReceivingAudio = false;
+        fifoReadStream = null;
+        // Reopen FIFO after a short delay
+        fifoOpenTimeout = setTimeout(openFifo, 100);
+      });
+      
+      fifoReadStream.on('error', (err) => {
+        // EAGAIN is expected for non-blocking read when no data
+        if (err.code !== 'EAGAIN') {
+          console.log('FIFO read error:', err.code);
+        }
+        hasReceivedFifoData = false;
+        isReceivingAudio = false;
+        fifoReadStream = null;
+        // Retry opening FIFO
+        fifoOpenTimeout = setTimeout(openFifo, 500);
+      });
+      
+    } catch (err) {
+      // ENXIO means no writer on FIFO, which is normal when librespot isn't playing
+      if (err.code !== 'ENXIO' && err.code !== 'EAGAIN') {
+        console.log('Failed to open FIFO:', err.code);
+      }
+      // Retry opening FIFO
+      fifoOpenTimeout = setTimeout(openFifo, 1000);
+    }
+  }
+  
+  // Start silence generator if enabled
+  if (SILENCE_ON_NO_INPUT) {
+    startSilenceGenerator();
+  }
+  
+  // Start trying to read from FIFO
+  openFifo();
+  
   // Handle FFmpeg stdout pipe errors
   ffmpeg.stdout.on('error', (error) => {
     console.error('FFmpeg stdout error:', error);
-    cleanupFFmpeg(ffmpeg, res);
+    stopSilenceGenerator();
+    cleanupFFmpeg(ffmpeg, res, fifoReadStream, silenceInterval);
   });
   
   // Handle FFmpeg errors
   ffmpeg.stderr.on('data', (data) => {
-    console.log(`FFmpeg: ${data}`);
+    const msg = data.toString();
+    // Only log non-routine messages
+    if (!msg.includes('size=') && !msg.includes('time=')) {
+      console.log(`FFmpeg: ${msg}`);
+    }
   });
   
   ffmpeg.on('error', (error) => {
     console.error('FFmpeg process error:', error);
-    cleanupFFmpeg(ffmpeg, res);
+    stopSilenceGenerator();
+    cleanupFFmpeg(ffmpeg, res, fifoReadStream, silenceInterval);
   });
   
   ffmpeg.on('close', (code) => {
     console.log(`FFmpeg process exited with code ${code}`);
-    cleanupFFmpeg(ffmpeg, res);
+    stopSilenceGenerator();
+    cleanupFFmpeg(ffmpeg, res, fifoReadStream, silenceInterval);
+  });
+  
+  // Handle stdin errors (important for pipe)
+  ffmpeg.stdin.on('error', (error) => {
+    if (error.code !== 'EPIPE') {
+      console.error('FFmpeg stdin error:', error);
+    }
+    stopSilenceGenerator();
+    cleanupFFmpeg(ffmpeg, res, fifoReadStream, silenceInterval);
   });
   
   // Handle response pipe errors
   res.on('error', (error) => {
     console.error('Response stream error:', error);
-    cleanupFFmpeg(ffmpeg, res);
+    stopSilenceGenerator();
+    cleanupFFmpeg(ffmpeg, res, fifoReadStream, silenceInterval);
   });
   
   // Handle client disconnect
   req.on('close', () => {
     console.log('Client disconnected:', req.ip);
-    cleanupFFmpeg(ffmpeg, res);
+    stopSilenceGenerator();
+    cleanupFFmpeg(ffmpeg, res, fifoReadStream, silenceInterval);
   });
   
   req.on('error', (error) => {
     console.error('Request error:', error);
-    cleanupFFmpeg(ffmpeg, res);
+    stopSilenceGenerator();
+    cleanupFFmpeg(ffmpeg, res, fifoReadStream, silenceInterval);
   });
 });
 
@@ -170,6 +286,7 @@ app.get('/', (req, res) => {
       <body>
         <h1>Roon LibreSpot Streaming Server</h1>
         <p>Active clients: ${currentClients.size}</p>
+        <p>Receiving audio: ${isReceivingAudio}</p>
         <p>Stream URL: <a href="/stream">/stream</a></p>
         <p>Health check: <a href="/health">/health</a></p>
       </body>
@@ -182,5 +299,6 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Streaming server listening on port ${PORT}`);
   console.log(`Stream URL: http://0.0.0.0:${PORT}/stream`);
   console.log(`Format: ${STREAM_FORMAT}, Bitrate: ${BITRATE}`);
+  console.log(`Silence on no input: ${SILENCE_ON_NO_INPUT}`);
   console.log(`Waiting for audio from FIFO: ${FIFO_PATH}`);
 });
