@@ -238,7 +238,7 @@ environment:
   - STREAM_NAME=My Custom Stream Name
   - STREAM_GENRE=Various
   - STREAM_DESCRIPTION=My personal Spotify stream
-  - STREAM_URL=http://my-server.local:8080
+  - STREAM_URL=http://YOUR_SERVER_IP:8080
 ```
 
 This metadata will appear in Roon and VLC when the stream is registered.
