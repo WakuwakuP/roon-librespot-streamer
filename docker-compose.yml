@@ -30,6 +30,12 @@ services:
 
       # Additional librespot arguments (optional)
       # - LIBRESPOT_ARGS=--disable-audio-cache
+
+      # Cache directory for credentials and audio (important for authentication)
+      - CACHE_DIR=/cache
+    volumes:
+      # Persist Spotify credentials cache (delete this folder to re-authenticate)
+      - librespot-cache:/cache
     # Note: ports mapping is not used with network_mode: host
     # The container uses the host's network directly
     healthcheck:
@@ -38,3 +44,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+
+volumes:
+  librespot-cache:

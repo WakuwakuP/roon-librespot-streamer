@@ -47,6 +47,14 @@ echo "Bitrate: ${BITRATE}k"
 echo "Volume control: ${VOLUME_CTRL}"
 echo "Initial volume: ${INITIAL_VOLUME}%"
 
+# Set cache directory if specified
+CACHE_ARGS=""
+if [ -n "$CACHE_DIR" ]; then
+    echo "Cache directory: ${CACHE_DIR}"
+    mkdir -p "$CACHE_DIR"
+    CACHE_ARGS="--cache $CACHE_DIR"
+fi
+
 librespot \
     --name "${DEVICE_NAME}" \
     --backend pipe \
@@ -55,6 +63,7 @@ librespot \
     --initial-volume ${INITIAL_VOLUME} \
     --volume-ctrl ${VOLUME_CTRL} \
     --enable-volume-normalisation \
+    $CACHE_ARGS \
     ${LIBRESPOT_ARGS} &
 
 LIBRESPOT_PID=$!
