@@ -40,7 +40,6 @@ if [ "$BACKEND" = "pipe" ]; then
                 ffmpeg -f s16le -ar 44100 -ac 2 -i - \
                     -fflags +nobuffer -flags low_delay -max_delay 0 \
                     -c:a flac -compression_level 5 \
-                    -frame_size 4096 \
                     -f flac pipe:1 2>> /tmp/ffmpeg-error.log | streaming-server
             exitcode=$?
             echo "Stream mixer/FFmpeg/streaming-server exited with code $exitcode"

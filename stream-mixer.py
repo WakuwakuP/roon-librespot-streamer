@@ -69,13 +69,11 @@ def main():
     while True:
         pipe = None
         try:
-            # Try to open the pipe
-            # This will block until librespot opens it for writing
-            # We'll stream silence while waiting in the exception handler
-            log(f"Waiting to open pipe: {pipe_path}")
+            # Try to open the pipe in non-blocking mode
+            # With O_NONBLOCK, opening succeeds immediately even without a writer
+            # We can then read with timeout and stream silence when no data is available
+            log(f"Opening pipe: {pipe_path}")
             
-            # Open with a timeout using a non-blocking approach
-            # First, try to open non-blocking to check existence
             try:
                 fd = os.open(pipe_path, os.O_RDONLY | os.O_NONBLOCK)
             except FileNotFoundError:
