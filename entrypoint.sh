@@ -63,6 +63,7 @@ librespot \
     --initial-volume ${INITIAL_VOLUME} \
     --volume-ctrl ${VOLUME_CTRL} \
     --enable-volume-normalisation \
+    --verbose \
     $CACHE_ARGS \
     ${LIBRESPOT_ARGS} &
 

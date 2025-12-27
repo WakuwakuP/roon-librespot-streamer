@@ -29,7 +29,7 @@ services:
       - FIFO_PATH=/tmp/librespot-audio
 
       # Additional librespot arguments (optional)
-      # - LIBRESPOT_ARGS=--disable-audio-cache
+      - LIBRESPOT_ARGS=--disable-credential-cache
 
       # Cache directory for credentials and audio (important for authentication)
       - CACHE_DIR=/cache
