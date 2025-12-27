@@ -30,10 +30,22 @@ app.use(limiter);
 
 // Helper function to cleanup FFmpeg process
 function cleanupFFmpeg(ffmpeg, res) {
-  if (ffmpeg && !ffmpeg.killed) {
-    ffmpeg.kill('SIGTERM');
+  // Prevent multiple cleanup attempts
+  if (res._cleanedUp) {
+    return;
   }
+  res._cleanedUp = true;
+  
   currentClients.delete(res);
+  
+  if (ffmpeg && !ffmpeg.killed) {
+    try {
+      ffmpeg.kill('SIGTERM');
+    } catch (error) {
+      // Ignore errors if process already exited
+      console.log('FFmpeg cleanup: process already terminated');
+    }
+  }
 }
 
 // Health check endpoint
@@ -111,17 +123,31 @@ app.get('/stream', (req, res) => {
   // Pipe FFmpeg output to HTTP response
   ffmpeg.stdout.pipe(res);
   
+  // Handle FFmpeg stdout pipe errors
+  ffmpeg.stdout.on('error', (error) => {
+    console.error('FFmpeg stdout error:', error);
+    cleanupFFmpeg(ffmpeg, res);
+  });
+  
   // Handle FFmpeg errors
   ffmpeg.stderr.on('data', (data) => {
     console.log(`FFmpeg: ${data}`);
   });
   
   ffmpeg.on('error', (error) => {
-    console.error('FFmpeg error:', error);
+    console.error('FFmpeg process error:', error);
+    cleanupFFmpeg(ffmpeg, res);
   });
   
   ffmpeg.on('close', (code) => {
     console.log(`FFmpeg process exited with code ${code}`);
+    cleanupFFmpeg(ffmpeg, res);
+  });
+  
+  // Handle response pipe errors
+  res.on('error', (error) => {
+    console.error('Response stream error:', error);
+    cleanupFFmpeg(ffmpeg, res);
   });
   
   // Handle client disconnect
