@@ -1,4 +1,5 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
@@ -10,6 +11,16 @@ const STREAM_FORMAT = process.env.STREAM_FORMAT || 'mp3';
 const BITRATE = process.env.BITRATE || '320k';
 
 let currentClients = new Set();
+
+// Rate limiting middleware to prevent abuse
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.'
+});
+
+// Apply rate limiting to all routes
+app.use(limiter);
 
 // Helper function to cleanup FFmpeg process
 function cleanupFFmpeg(ffmpeg, res) {
