@@ -12,6 +12,9 @@ RUN apt-get update && apt-get install -y \
 # Build librespot from source
 WORKDIR /build
 ARG LIBRESPOT_VERSION=v0.4.2
+# Note: SSL verification disabled as temporary workaround for CI/CD environments
+# with self-signed certificates. In production, this image should be built in
+# a properly configured environment with valid certificates.
 ENV CARGO_HTTP_CHECK_REVOKE=false
 RUN git config --global http.sslVerify false && \
     git clone --branch ${LIBRESPOT_VERSION} --depth 1 https://github.com/librespot-org/librespot.git && \

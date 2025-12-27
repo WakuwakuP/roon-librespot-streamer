@@ -69,7 +69,8 @@ echo "✓ Root endpoint accessible"
 # Test that /stream endpoint exists (without trying to stream, as we don't have data)
 echo "Testing /stream endpoint existence..."
 # Use HEAD request to avoid hanging on stream
-HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 2 http://localhost:13000/stream || echo "timeout")
+# Timeout set to 5 seconds to accommodate slower systems
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 http://localhost:13000/stream || echo "timeout")
 
 if [ "$HTTP_CODE" == "timeout" ] || [ "$HTTP_CODE" == "200" ]; then
     # Timeout or 200 is expected since we're trying to stream without data

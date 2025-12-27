@@ -54,5 +54,5 @@ echo "✓ Stream available at: http://0.0.0.0:${STREAMING_PORT}/stream"
 echo ""
 echo "Waiting for Spotify Connect..."
 
-# Wait for both processes
-wait $LIBRESPOT_PID $SERVER_PID
+# Wait for all background processes
+wait

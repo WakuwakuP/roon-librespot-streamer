@@ -9,13 +9,21 @@ const FIFO_PATH = process.env.FIFO_PATH || '/tmp/librespot-audio';
 const STREAM_FORMAT = process.env.STREAM_FORMAT || 'mp3';
 const BITRATE = process.env.BITRATE || '320k';
 
-let currentClients = [];
+let currentClients = new Set();
+
+// Helper function to cleanup FFmpeg process
+function cleanupFFmpeg(ffmpeg, res) {
+  if (ffmpeg && !ffmpeg.killed) {
+    ffmpeg.kill('SIGTERM');
+  }
+  currentClients.delete(res);
+}
 
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
-    clients: currentClients.length,
+    clients: currentClients.size,
     fifo: fs.existsSync(FIFO_PATH)
   });
 });
@@ -33,7 +41,7 @@ app.get('/stream', (req, res) => {
   res.setHeader('icy-description', 'Streaming from Spotify Connect');
   
   // Track this client
-  currentClients.push(res);
+  currentClients.add(res);
   
   // Start FFmpeg to read from FIFO and encode to desired format
   const ffmpeg = spawn('ffmpeg', [
@@ -65,13 +73,12 @@ app.get('/stream', (req, res) => {
   // Handle client disconnect
   req.on('close', () => {
     console.log('Client disconnected:', req.ip);
-    currentClients = currentClients.filter(client => client !== res);
-    ffmpeg.kill('SIGTERM');
+    cleanupFFmpeg(ffmpeg, res);
   });
   
   req.on('error', (error) => {
     console.error('Request error:', error);
-    ffmpeg.kill('SIGTERM');
+    cleanupFFmpeg(ffmpeg, res);
   });
 });
 
@@ -82,7 +89,7 @@ app.get('/', (req, res) => {
       <head><title>Roon LibreSpot Streamer</title></head>
       <body>
         <h1>Roon LibreSpot Streaming Server</h1>
-        <p>Active clients: ${currentClients.length}</p>
+        <p>Active clients: ${currentClients.size}</p>
         <p>Stream URL: <a href="/stream">/stream</a></p>
         <p>Health check: <a href="/health">/health</a></p>
       </body>
