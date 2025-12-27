@@ -2,6 +2,9 @@
 
 A Docker image for streaming music from Spotify Connect to Roon WebRadio.
 
+📖 **[Quick Start Guide (QUICKSTART.md)](QUICKSTART.md)** - Get started now!  
+📐 **[Architecture Details (ARCHITECTURE.md)](ARCHITECTURE.md)** - Technical details
+
 ## Architecture
 
 ```
