@@ -123,6 +123,14 @@ DOCKER_BUILDKIT=1 docker compose build
    docker compose logs -f
    ```
 
+### Connection Reset エラー (ECONNRESET)
+
+クライアント切断時に `ECONNRESET` エラーが表示される場合:
+
+- これは正常な動作です。クライアントが接続を切断したことを示しています
+- サーバーは自動的にクリーンアップを行い、FFmpeg プロセスを終了します
+- エラーログは情報提供のためのものであり、機能には影響しません
+
 ### Spotify デバイスが見つからない
 
 - コンテナが起動していることを確認

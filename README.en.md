@@ -123,6 +123,14 @@ DOCKER_BUILDKIT=1 docker compose build
    docker compose logs -f
    ```
 
+### Connection Reset Errors (ECONNRESET)
+
+If you see `ECONNRESET` errors when clients disconnect:
+
+- This is normal behavior indicating a client has disconnected
+- The server automatically cleans up and terminates FFmpeg processes
+- These error logs are informational and don't affect functionality
+
 ### Spotify device not found
 
 - Ensure container is running
