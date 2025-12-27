@@ -92,24 +92,17 @@ environment:
 
 ## Build Options
 
-### Pre-built version (default)
+### Build from source (default)
 
 ```bash
 docker compose build
 ```
 
-### Build from source
+**Note**: Some CI/CD environments may encounter SSL certificate verification issues. See [BUILD_NOTES.md](BUILD_NOTES.md) for details.
 
-For more control:
-
+For local builds:
 ```bash
-docker compose -f docker-compose.yml build --build-arg DOCKERFILE=Dockerfile.build-from-source
-```
-
-Or build directly:
-
-```bash
-docker build -f Dockerfile.build-from-source -t roon-librespot-streamer .
+DOCKER_BUILDKIT=1 docker compose build
 ```
 
 ## Troubleshooting

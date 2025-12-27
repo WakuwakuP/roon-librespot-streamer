@@ -92,24 +92,17 @@ environment:
 
 ## ビルドオプション
 
-### プリビルド版 (デフォルト)
+### ソースからビルド (デフォルト)
 
 ```bash
 docker compose build
 ```
 
-### ソースからビルド
+**注意**: CI/CD環境によってはSSL証明書の検証問題が発生する場合があります。詳細は [BUILD_NOTES.md](BUILD_NOTES.md) を参照してください。
 
-より細かい制御が必要な場合：
-
+ローカル環境でビルドする場合:
 ```bash
-docker compose -f docker-compose.yml build --build-arg DOCKERFILE=Dockerfile.build-from-source
-```
-
-または、直接ビルド：
-
-```bash
-docker build -f Dockerfile.build-from-source -t roon-librespot-streamer .
+DOCKER_BUILDKIT=1 docker compose build
 ```
 
 ## トラブルシューティング
