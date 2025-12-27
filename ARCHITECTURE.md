@@ -100,16 +100,37 @@ librespot \
 - Express.js (HTTP サーバー)
 - FFmpeg (オーディオエンコーディング)
 
-**FFmpeg Pipeline:**
+**FFmpeg Pipeline (with silence generation):**
+```bash
+# When SILENCE_ON_NO_INPUT=true (default)
+ffmpeg \
+  -f lavfi \                              # Virtual input source
+  -i anullsrc=channel_layout=stereo:sample_rate=44100 \  # Continuous silence generator
+  -f s16le \                              # Input format from librespot (raw PCM)
+  -ar 44100 \                             # Sample rate
+  -ac 2 \                                 # Stereo
+  -i /tmp/librespot-audio \               # Input from FIFO
+  -filter_complex '[1:a][0:a]amix=inputs=2:duration=longest:dropout_transition=0[out]' \
+  -map '[out]' \                          # Use mixed output
+  -f flac \                               # Output format (FLAC default)
+  -compression_level 5 \                  # FLAC compression
+  -                                       # stdout に出力
+
+# When no input from librespot, outputs silence
+# When librespot provides audio, streams it seamlessly
+```
+
+**FFmpeg Pipeline (without silence, SILENCE_ON_NO_INPUT=false):**
 ```bash
 ffmpeg \
-  -f s16le \              # 入力フォーマット (16-bit signed little-endian)
-  -ar 44100 \             # サンプルレート
-  -ac 2 \                 # ステレオ
-  -i /tmp/librespot-audio \  # 入力ソース (FIFO)
-  -f mp3 \                # 出力フォーマット
-  -b:a 320k \             # ビットレート
-  -                       # stdout に出力
+  -re \                      # Read at native frame rate
+  -f s16le \                 # Input format (16-bit signed little-endian)
+  -ar 44100 \                # Sample rate
+  -ac 2 \                    # Stereo
+  -i /tmp/librespot-audio \  # Input source (FIFO)
+  -f flac \                  # Output format
+  -compression_level 5 \     # FLAC compression
+  -                          # stdout に出力
 ```
 
 ### 4. Docker Container
@@ -141,14 +162,15 @@ ffmpeg \
    - Continuous stream processing
 
 4. **FFmpeg → HTTP Response**
-   - Format: MP3 (default) or other configured format
-   - Bitrate: 320 kbps (default) or configured
+   - Format: FLAC (default) or other configured format (mp3, opus, aac)
+   - Bitrate: 320 kbps for lossy formats (ignored for FLAC)
+   - Silence generation: Outputs silence when no input from librespot (default)
    - HTTP headers: proper streaming headers
 
 5. **HTTP Stream → Roon**
    - Protocol: HTTP/1.1
    - Connection: Keep-Alive
-   - Content-Type: audio/mp3
+   - Content-Type: audio/flac (or configured format)
 
 ## Configuration Options
 
@@ -157,9 +179,10 @@ ffmpeg \
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `DEVICE_NAME` | `Spotify Connect (Roon)` | Spotify アプリに表示される名前 |
-| `BITRATE` | `320` | librespot ビットレート (96, 160, 320) |
-| `STREAM_FORMAT` | `mp3` | ストリーム形式 (mp3, opus, aac) |
+| `BITRATE` | `320` | ビットレート (96, 160, 320) - 非可逆圧縮形式用 |
+| `STREAM_FORMAT` | `flac` | ストリーム形式 (flac, mp3, opus, aac) |
 | `STREAMING_PORT` | `3000` | HTTP サーバーポート |
+| `SILENCE_ON_NO_INPUT` | `true` | 入力なし時に無音をストリーミング |
 | `FIFO_PATH` | `/tmp/librespot-audio` | FIFO パイプのパス |
 | `INITIAL_VOLUME` | `100` | 初期音量 (0-100) |
 | `VOLUME_CTRL` | `linear` | 音量制御 (linear, log) |

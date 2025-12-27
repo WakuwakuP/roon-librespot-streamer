@@ -77,9 +77,10 @@ You can customize the following environment variables in `docker-compose.yml`:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `DEVICE_NAME` | `Spotify Connect (Roon)` | Device name shown in Spotify app |
-| `BITRATE` | `320` | Bitrate (96, 160, 320) |
-| `STREAM_FORMAT` | `mp3` | Streaming format (mp3, opus, etc.) |
+| `BITRATE` | `320` | Bitrate (96, 160, 320) - for lossy formats only |
+| `STREAM_FORMAT` | `flac` | Streaming format (flac, mp3, opus, etc.) |
 | `STREAMING_PORT` | `3000` | HTTP streaming port |
+| `SILENCE_ON_NO_INPUT` | `true` | Stream silence when no input from librespot |
 | `INITIAL_VOLUME` | `100` | Initial volume (0-100) |
 | `VOLUME_CTRL` | `linear` | Volume control type (linear, log) |
 

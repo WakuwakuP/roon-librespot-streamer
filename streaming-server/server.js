@@ -7,8 +7,9 @@ const { spawn } = require('child_process');
 const app = express();
 const PORT = process.env.STREAMING_PORT || 3000;
 const FIFO_PATH = process.env.FIFO_PATH || '/tmp/librespot-audio';
-const STREAM_FORMAT = process.env.STREAM_FORMAT || 'mp3';
+const STREAM_FORMAT = process.env.STREAM_FORMAT || 'flac';
 const BITRATE = process.env.BITRATE || '320k';
+const SILENCE_ON_NO_INPUT = process.env.SILENCE_ON_NO_INPUT !== 'false'; // Default to true
 
 let currentClients = new Set();
 
@@ -54,16 +55,50 @@ app.get('/stream', (req, res) => {
   // Track this client
   currentClients.add(res);
   
+  // Build FFmpeg command
+  let ffmpegArgs;
+  
+  if (SILENCE_ON_NO_INPUT) {
+    // Generate silence when there's no input from FIFO
+    // This approach mixes FIFO input with a continuous silence generator
+    // When FIFO has data, it passes through; when empty, silence is output
+    ffmpegArgs = [
+      '-f', 'lavfi',
+      '-i', 'anullsrc=channel_layout=stereo:sample_rate=44100',  // Continuous silence source
+      '-f', 's16le',                 // Input format from librespot (raw PCM)
+      '-ar', '44100',                // Sample rate
+      '-ac', '2',                    // Stereo
+      '-i', FIFO_PATH,               // Input from FIFO
+      '-filter_complex', '[1:a][0:a]amix=inputs=2:duration=longest:dropout_transition=0[out]',
+      '-map', '[out]',
+      '-f', STREAM_FORMAT,           // Output format
+    ];
+  } else {
+    // Original behavior - block when no input
+    ffmpegArgs = [
+      '-re',                         // Read input at native frame rate
+      '-f', 's16le',                 // Input format from librespot (raw PCM)
+      '-ar', '44100',                // Sample rate
+      '-ac', '2',                    // Stereo
+      '-i', FIFO_PATH,               // Input from FIFO
+      '-f', STREAM_FORMAT,           // Output format
+    ];
+  }
+  
+  // Add bitrate only for lossy formats (not for FLAC or WAV)
+  if (STREAM_FORMAT !== 'flac' && STREAM_FORMAT !== 'wav') {
+    ffmpegArgs.push('-b:a', BITRATE);
+  }
+  
+  // For FLAC, set compression level for better quality/size tradeoff
+  if (STREAM_FORMAT === 'flac') {
+    ffmpegArgs.push('-compression_level', '5');
+  }
+  
+  ffmpegArgs.push('-');  // Output to stdout
+  
   // Start FFmpeg to read from FIFO and encode to desired format
-  const ffmpeg = spawn('ffmpeg', [
-    '-f', 's16le',           // Input format from librespot (raw PCM)
-    '-ar', '44100',          // Sample rate
-    '-ac', '2',              // Stereo
-    '-i', FIFO_PATH,         // Input from FIFO
-    '-f', STREAM_FORMAT,     // Output format
-    '-b:a', BITRATE,         // Bitrate
-    '-'                      // Output to stdout
-  ]);
+  const ffmpeg = spawn('ffmpeg', ffmpegArgs);
   
   // Pipe FFmpeg output to HTTP response
   ffmpeg.stdout.pipe(res);

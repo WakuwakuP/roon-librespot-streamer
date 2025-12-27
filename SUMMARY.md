@@ -36,7 +36,8 @@ Spotify Connect → librespot → FIFO pipe → HTTP Streaming Server (FFmpeg) �
 - **FIFO pipe**: Named pipe at `/tmp/librespot-audio` for inter-process communication
 - **HTTP Streaming Server**: Node.js application that:
   - Reads audio from FIFO pipe
-  - Uses FFmpeg to encode to MP3/Opus/etc
+  - Uses FFmpeg to encode to FLAC/MP3/Opus/etc
+  - Generates silence when no input from librespot (configurable)
   - Serves HTTP stream at `/stream` endpoint
 - **No ALSA required**: ✅ Works without ALSA devices on host
 
@@ -67,8 +68,10 @@ Spotify Connect → librespot → FIFO pipe → HTTP Streaming Server (FFmpeg) �
 ### 3. Features / 機能
 
 ✅ **Works without ALSA devices** (main requirement)
-✅ **Configurable audio format** (MP3, Opus, AAC, etc.)
-✅ **Configurable bitrate** (96, 160, 320 kbps)
+✅ **Lossless audio streaming** (FLAC default)
+✅ **Silence generation** when no input from librespot
+✅ **Configurable audio format** (FLAC, MP3, Opus, AAC, etc.)
+✅ **Configurable bitrate** (96, 160, 320 kbps for lossy formats)
 ✅ **Health check endpoint** (`/health`)
 ✅ **Multiple simultaneous clients** supported
 ✅ **Rate limiting** (100 req/15min per IP)

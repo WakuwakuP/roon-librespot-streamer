@@ -199,7 +199,15 @@ ports:
 Edit `docker-compose.yml`:
 ```yaml
 environment:
-  - STREAM_FORMAT=opus  # or aac, flac, etc.
+  - STREAM_FORMAT=mp3  # Default is flac. Options: flac, mp3, opus, aac, etc.
+```
+
+### Disable Silence Streaming / 無音ストリーミングの無効化
+
+Edit `docker-compose.yml`:
+```yaml
+environment:
+  - SILENCE_ON_NO_INPUT=false  # Default is true
 ```
 
 ---

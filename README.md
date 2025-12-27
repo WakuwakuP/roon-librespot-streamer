@@ -77,9 +77,10 @@ docker compose up -d
 | 変数名 | デフォルト値 | 説明 |
 |--------|------------|------|
 | `DEVICE_NAME` | `Spotify Connect (Roon)` | Spotify アプリに表示されるデバイス名 |
-| `BITRATE` | `320` | ビットレート (96, 160, 320) |
-| `STREAM_FORMAT` | `mp3` | ストリーミング形式 (mp3, opus など) |
+| `BITRATE` | `320` | ビットレート (96, 160, 320) - 非可逆圧縮形式用 |
+| `STREAM_FORMAT` | `flac` | ストリーミング形式 (flac, mp3, opus など) |
 | `STREAMING_PORT` | `3000` | HTTP ストリーミングポート |
+| `SILENCE_ON_NO_INPUT` | `true` | librespot からの入力がない時に無音をストリーミング |
 | `INITIAL_VOLUME` | `100` | 初期音量 (0-100) |
 | `VOLUME_CTRL` | `linear` | 音量制御方式 (linear, log) |
 
