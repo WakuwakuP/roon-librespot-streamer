@@ -1,0 +1,53 @@
+FROM rust:1.75-slim as builder
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libasound2-dev \
+    pkg-config \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Build librespot from source
+WORKDIR /build
+ARG LIBRESPOT_VERSION=v0.4.2
+RUN git clone --branch ${LIBRESPOT_VERSION} --depth 1 https://github.com/librespot-org/librespot.git && \
+    cd librespot && \
+    cargo build --release --no-default-features
+
+# Final image
+FROM node:18-slim
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy librespot binary from builder
+COPY --from=builder /build/librespot/target/release/librespot /usr/local/bin/librespot
+RUN chmod +x /usr/local/bin/librespot
+
+# Set up streaming server
+WORKDIR /app/streaming-server
+COPY streaming-server/package*.json ./
+RUN npm install --production
+
+COPY streaming-server/ ./
+
+# Copy entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Environment variables with defaults
+ENV DEVICE_NAME="Spotify Connect (Roon)"
+ENV BITRATE=320
+ENV STREAM_FORMAT=mp3
+ENV STREAMING_PORT=3000
+ENV FIFO_PATH=/tmp/librespot-audio
+ENV INITIAL_VOLUME=100
+ENV VOLUME_CTRL=linear
+
+# Expose streaming port
+EXPOSE 3000
+
+ENTRYPOINT ["/entrypoint.sh"]
