@@ -201,10 +201,14 @@ These headers allow Roon, VLC, and other internet radio clients to properly reco
 
 ## Roonへの登録方法 (How to Register in Roon)
 
-1. コンテナを起動し、Spotifyで音楽を再生 (Start container and play music on Spotify)
+1. コンテナを起動 (Start container)
 2. Roonアプリで Settings → Add Radio → Live Radio
 3. URL入力: `http://{YOUR_IP}:8080/stream`
 4. ストリーム情報が自動検出されます (Stream info will be auto-detected)
+
+**注意:** Spotifyで音楽を再生していなくても登録可能です。アイドル時は無音が配信されます。
+
+**Note:** Registration works even when no music is playing on Spotify. Silence is streamed when idle.
 
 **カスタム設定 (Custom configuration):**
 ```yaml

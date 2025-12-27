@@ -36,8 +36,15 @@ if [ "$BACKEND" = "pipe" ]; then
             # Use stream-mixer.py to ensure continuous audio streaming
             # The mixer reads from the librespot pipe and injects silence when no data is available
             # This prevents client timeouts when librespot is idle or has errors
+            #
+            # FFmpeg low-latency flags for immediate stream availability:
+            # -fflags +nobuffer: Disable internal buffering for immediate data flow
+            # -flags low_delay: Minimize encoding delay for real-time streaming
+            # -max_delay 0: Prevent buffering in the muxer for instant output
+            # These flags ensure the stream is available immediately for radio registration in Roon/VLC
             python3 /stream-mixer.py "$OUTPUT_FILE" | \
                 ffmpeg -f s16le -ar 44100 -ac 2 -i - \
+                    -fflags +nobuffer -flags low_delay -max_delay 0 \
                     -c:a flac -compression_level 5 \
                     -f flac pipe:1 2>> /tmp/ffmpeg-error.log | streaming-server
             exitcode=$?
