@@ -138,8 +138,8 @@ If errors persist after following the above steps:
    ```
    If the volume wasn't removed, identify the exact volume name and remove it:
    ```bash
-   # Remove specific volume (use the name from above)
-   docker volume rm <volume_name>
+   # Remove specific volume (use the name from the ls command above)
+   docker volume rm VOLUME_NAME
    ```
    Note: Volume names may be prefixed with the project directory (e.g., `roon-librespot-streamer_librespot-cache`).
 
