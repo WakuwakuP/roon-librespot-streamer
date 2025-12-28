@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: roon-librespot-streamer
     restart: unless-stopped
-    # Required for mDNS/Zeroconf (Spotify Connect discovery) - Linux only
+    # Required for mDNS (Spotify Connect discovery) - Linux only
     network_mode: host
     environment:
       # Spotify Connect device name (as shown in Spotify)
