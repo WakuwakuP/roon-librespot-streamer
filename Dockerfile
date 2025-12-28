@@ -1,11 +1,10 @@
 FROM rust:1.85-slim AS builder
 
-# Install build dependencies (including avahi for mDNS/Zeroconf support)
+# Install build dependencies
 RUN apt-get update && apt-get install -y \
 	build-essential \
 	libasound2-dev \
 	libssl-dev \
-	libavahi-client-dev \
 	pkg-config \
 	git \
 	ca-certificates \
@@ -28,18 +27,15 @@ RUN git config --global http.sslVerify false && \
 	echo 'check-revoke = false' >> /root/.cargo/config.toml && \
 	echo '[net]' >> /root/.cargo/config.toml && \
 	echo 'git-fetch-with-cli = true' >> /root/.cargo/config.toml && \
-	cargo build --release --no-default-features --features "with-avahi,native-tls"
+	cargo build --release --no-default-features --features "native-tls"
 
 # Final stage
 FROM node:18-slim
 
-# Install runtime dependencies (including avahi for mDNS/Zeroconf)
+# Install runtime dependencies
 RUN apt-get update && apt-get install -y \
 	ffmpeg \
 	curl \
-	avahi-daemon \
-	libavahi-client3 \
-	dbus \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Copy librespot binary from builder
