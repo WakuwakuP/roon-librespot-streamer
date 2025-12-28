@@ -27,7 +27,7 @@ RUN git config --global http.sslVerify false && \
 	echo 'check-revoke = false' >> /root/.cargo/config.toml && \
 	echo '[net]' >> /root/.cargo/config.toml && \
 	echo 'git-fetch-with-cli = true' >> /root/.cargo/config.toml && \
-	cargo build --release --no-default-features --features "native-tls"
+	cargo build --release --no-default-features --features "native-tls,with-libmdns"
 
 # Final stage
 FROM node:18-slim
