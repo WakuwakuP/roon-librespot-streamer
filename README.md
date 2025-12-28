@@ -142,6 +142,19 @@ DOCKER_BUILDKIT=1 docker compose build
 - ネットワーク接続を確認
 - Docker ホストのリソース（CPU、メモリ）を確認
 
+### 認証情報のリセット
+
+Spotify アカウントを変更したい、または認証をやり直したい場合:
+
+```bash
+# キャッシュボリュームを削除
+docker compose down
+docker volume rm roon-librespot-streamer_librespot-cache
+docker compose up -d
+```
+
+再起動後、Spotify アプリから再度デバイスを選択すると、新しい認証情報が保存されます。
+
 ## ライセンス
 
 MIT License
