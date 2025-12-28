@@ -52,7 +52,6 @@ librespot \
     --initial-volume ${INITIAL_VOLUME} \
     --volume-ctrl ${VOLUME_CTRL} \
     --enable-volume-normalisation \
-    --zeroconf-backend libmdns \
     --verbose \
     $CACHE_ARGS \
     ${LIBRESPOT_ARGS} &
