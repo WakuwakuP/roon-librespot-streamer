@@ -29,7 +29,9 @@ services:
       - FIFO_PATH=/tmp/librespot-audio
 
       # Additional librespot arguments (optional)
-      - LIBRESPOT_ARGS=--disable-credential-cache
+      # Note: Credential caching is enabled by default to prevent authentication errors.
+      # To re-authenticate, delete the librespot-cache volume.
+      - LIBRESPOT_ARGS=
 
       # Cache directory for credentials and audio (important for authentication)
       - CACHE_DIR=/cache

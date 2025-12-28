@@ -142,6 +142,19 @@ If you see `ECONNRESET` errors when clients disconnect:
 - Check network connection
 - Verify Docker host resources (CPU, memory)
 
+### Reset Credentials
+
+If you want to change Spotify accounts or redo authentication:
+
+```bash
+# Remove the cache volume
+docker compose down
+docker volume rm roon-librespot-streamer_librespot-cache
+docker compose up -d
+```
+
+After restart, select the device again from the Spotify app to save new credentials.
+
 ## License
 
 MIT License
