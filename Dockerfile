@@ -12,10 +12,9 @@ RUN apt-get update && apt-get install -y \
 
 # Build librespot from source
 WORKDIR /build
-# Use v0.4.2 - most stable version without audio key errors
-# v0.8.0 has known regressions causing "error audio key 0 1" issues
-# See: https://github.com/librespot-org/librespot/issues/1236
-ARG LIBRESPOT_VERSION=v0.4.2
+# Use latest stable version - v0.4.2 is too old and doesn't work with current Spotify API
+# v0.5.0 or later is required for current Spotify authentication
+ARG LIBRESPOT_VERSION=v0.8.0
 # Note: SSL verification disabled as temporary workaround for CI/CD environments
 # with self-signed certificates. In production, this image should be built in
 # a properly configured environment with valid certificates.

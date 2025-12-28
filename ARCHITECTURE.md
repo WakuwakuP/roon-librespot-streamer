@@ -74,7 +74,8 @@ librespot \
   --bitrate 320 \                     # ビットレート
   --initial-volume 100 \              # 初期音量
   --volume-ctrl linear \              # 音量制御方式
-  --enable-volume-normalisation       # 音量正規化
+  --enable-volume-normalisation \     # 音量正規化
+  --zeroconf-backend libmdns          # Built-in mDNS backend
 ```
 
 ### 2. FIFO Pipe (Named Pipe)
@@ -146,7 +147,7 @@ ffmpeg \
 - `host` モード推奨 (Spotify Connect の mDNS 検出に必要)
 
 **Zeroconf Backend:**
-- Default mDNS implementation (v0.4.2 uses built-in zeroconf)
+- `libmdns` - Built-in mDNS implementation (no external dependencies required)
 
 ## Data Flow
 
