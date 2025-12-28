@@ -1,5 +1,33 @@
 # Build Notes
 
+## Librespot Version
+
+This project uses **librespot v0.4.2** specifically due to stability concerns with newer versions.
+
+### Why v0.4.2?
+
+- **Audio Key Error Fix**: Versions v0.5.0 through v0.8.0 have a known regression causing `error audio key 0 1` failures
+- **Proven Stability**: v0.4.2 is the most stable release for Spotify playback without authentication/decryption issues
+- **Reference**: See [librespot issue #1236](https://github.com/librespot-org/librespot/issues/1236)
+
+### Symptoms of Audio Key Error
+
+If you see these errors in logs, it indicates the audio key fetch issue:
+```
+[WARN librespot_playback::player] Unable to load key, continuing without decryption: Service unavailable { audio key error }
+[ERROR librespot_core::audio_key] error audio key 0 1
+```
+
+### Version Trade-offs
+
+| Version | Audio Key Issues | Authentication | Features |
+|---------|-----------------|----------------|----------|
+| v0.4.2  | ✅ Stable       | ✅ Works       | Basic    |
+| v0.5.0+ | ⚠️ Regression  | ✅ Works       | Advanced |
+| v0.8.0  | ❌ Known issue | ✅ Works       | Latest   |
+
+**Note**: v0.4.2 does not support the `--zeroconf-backend` flag. It uses the default built-in mDNS implementation which works well in most environments.
+
 ## SSL Certificate Issues in CI/CD
 
 The Docker build may encounter SSL certificate verification issues in certain CI/CD environments. This is a known issue with the build environment, not with the code itself.
