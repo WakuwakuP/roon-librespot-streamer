@@ -59,6 +59,7 @@ librespot \
     --initial-volume ${INITIAL_VOLUME} \
     --volume-ctrl ${VOLUME_CTRL} \
     --enable-volume-normalisation \
+    --zeroconf-backend avahi \
     --verbose \
     $CACHE_ARGS \
     ${LIBRESPOT_ARGS} &
